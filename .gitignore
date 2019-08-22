@@ -1,0 +1,9 @@
+# my backup files
+*~bak
+*bak~
+
+# build dir
+/build/
+
+# my notes
+NOTES*
