@@ -20,17 +20,20 @@ $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
 	@echo "IKEA: CREATE PACKAGE..."
 	@mkdir -p "$(BUILD_DIR)/tmp"
 	cd "$(BUILD_DIR)/tmp" && \
+		rm -rf "./$(KEA_INSTALLPREFIX)" etc && \
 		mkdir -p "./$(KEA_INSTALLPREFIX)" etc && \
 		rmdir "./$(KEA_INSTALLPREFIX)" && \
 		CID=$$(docker create --rm $(IKEA_TAG):$(KEA_VERSION)) && \
 		docker cp -a "$${CID}:$(KEA_INSTALLPREFIX)" \
 			"./$(KEA_INSTALLPREFIX)" && \
-		docker cp "$${CID}:/etc/ld-musl-x86_64.path" ./etc/ && \
-		tar cJf ../$(IKEA_PKG)-$(KEA_VERSION).tar.xz \
+		docker cp -a "$${CID}:/etc/ld-musl-$$(arch).path" ./etc/ && \
+		tar cJf "../$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
 			"./$(KEA_INSTALLPREFIX)" \
-			./etc/ld-musl-x86_64.path && \
+			./etc/ld-musl-$$(arch).path && \
 		docker rm -f "$${CID}" && \
-		cd .. && rm -rf tmp
+		cd .. && rm -rf tmp && \
+		sha256sum "$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
+			> "$(IKEA_PKG)-$(KEA_VERSION).tar.xz.sha256sum"
 
 $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: Dockerfile ikea.sh
 	@echo "IKEA: START DOCKER BUILD..."
