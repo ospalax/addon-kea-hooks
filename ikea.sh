@@ -31,6 +31,7 @@ install_kea_runtime_deps()
         openssl \
         ca-certificates \
         curl \
+        xz \
         ;
 
     apk add --no-cache \

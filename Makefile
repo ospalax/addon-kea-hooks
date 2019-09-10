@@ -14,9 +14,9 @@ include Makefile.config
 all: docker package
 
 docker: $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar
-package: $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tgz
+package: $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz
 
-$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tgz: docker
+$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
 	@echo "IKEA: CREATE PACKAGE..."
 	@mkdir -p "$(BUILD_DIR)/tmp"
 	cd "$(BUILD_DIR)/tmp" && \
@@ -26,7 +26,7 @@ $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tgz: docker
 		docker cp -a "$${CID}:$(KEA_INSTALLPREFIX)" \
 			"./$(KEA_INSTALLPREFIX)" && \
 		docker cp "$${CID}:/etc/ld-musl-x86_64.path" ./etc/ && \
-		tar -czf ../$(IKEA_PKG)-$(KEA_VERSION).tgz \
+		tar cJf ../$(IKEA_PKG)-$(KEA_VERSION).tar.xz \
 			"./$(KEA_INSTALLPREFIX)" \
 			./etc/ld-musl-x86_64.path && \
 		docker rm -f "$${CID}" && \
