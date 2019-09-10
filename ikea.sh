@@ -8,7 +8,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 
-set -e
+set -ex
 
 KEA_VERSION="$1"
 KEA_INSTALLPREFIX="${2:-/usr/local}"
@@ -104,6 +104,8 @@ install_kea_from_source()
 
     make -j ${MAKE_JOBS} && make install-strip
 
+    cd -
+
     echo "/lib:/usr/local/lib:/usr/lib" > /etc/ld-musl-x86_64.path
     echo "${KEA_INSTALLPREFIX}/lib" >> /etc/ld-musl-x86_64.path
     ldconfig "${KEA_INSTALLPREFIX}/lib"
@@ -117,7 +119,7 @@ clean_apk()
 
 clean_kea_build()
 {
-    rm -rf kea-${KEA_VERSION}
+    rm -rf /ikea/kea-${KEA_VERSION}
 }
 
 #
