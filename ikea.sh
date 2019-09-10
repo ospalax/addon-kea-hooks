@@ -10,9 +10,8 @@
 
 set -ex
 
-KEA_VERSION="$1"
-KEA_INSTALLPREFIX="${2:-/usr/local}"
-MAKE_JOBS="${3:-1}"
+KEA_INSTALLPREFIX="${KEA_INSTALLPREFIX:-/usr/local}"
+MAKE_JOBS="${MAKE_JOBS:-1}"
 
 #
 # functions
@@ -128,6 +127,19 @@ clean_kea_build()
     rm -rf /ikea/kea-${KEA_VERSION}
 }
 
+# arg: <variable name>
+is_true()
+{
+    _value=$(eval echo "\$${1}" | tr '[:upper:]' '[:lower:]')
+    case "$_value" in
+        yes|true)
+            return 0
+            ;;
+    esac
+
+    return 1
+}
+
 #
 # main
 #
@@ -140,8 +152,13 @@ install_kea_build_deps
 install_kea_from_source
 
 # cleanup
-clean_apk
-clean_kea_build
+if ! is_true KEEP_BUILDDEPS ; then
+    clean_apk
+fi
+
+if ! is_true KEEP_BUILDBLOB ; then
+    clean_kea_build
+fi
 
 exit 0
 

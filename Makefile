@@ -39,6 +39,8 @@ $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: Dockerfile ikea.sh
 		--build-arg KEA_VERSION=$(KEA_VERSION) \
 		--build-arg KEA_INSTALLPREFIX="$(KEA_INSTALLPREFIX)" \
 		--build-arg MAKE_JOBS=$(MAKE_JOBS) \
+		--build-arg KEEP_BUILDBLOB=$(KEEP_BUILDBLOB) \
+		--build-arg KEEP_BUILDDEPS=$(KEEP_BUILDDEPS) \
 		.
 	docker save -o "$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar" \
 		$(IKEA_TAG):$(KEA_VERSION)
