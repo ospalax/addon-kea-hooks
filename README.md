@@ -19,6 +19,13 @@ First of all you need installed `docker` and `make` command. This project (if su
 
 The archive is used as a artifact for ONE NFV appliance - rebuilding ISC Kea with each appliance build would be too time-consuming.
 
+
+### List default build parameters
+
+```
+% cat Makefile.config
+```
+
 ### Default build
 
 ```
@@ -28,14 +35,16 @@ The archive is used as a artifact for ONE NFV appliance - rebuilding ISC Kea wit
 
 ### OpenNebula build
 
+For OpenNebula's ONE NFV appliance there exists a handy script (adjust `MAKE_JOBS` to your setup):
+
+```
+% extra/onekea.sh
+```
+
+Or do something like this:
+
 ```
 % env MAKE_JOBS=8 KEA_INSTALLPREFIX=/opt/one-appliance/kea make
-```
-
-### List build parameters
-
-```
-% cat Makefile.config
 ```
 
 ## Issues
