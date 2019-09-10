@@ -106,8 +106,13 @@ install_kea_from_source()
 
     cd -
 
-    echo "/lib:/usr/local/lib:/usr/lib" > /etc/ld-musl-x86_64.path
-    echo "${KEA_INSTALLPREFIX}/lib" >> /etc/ld-musl-x86_64.path
+    # musl linker search paths
+    if ! [ -f /etc/ld-musl-$(arch).path ] ; then
+        echo "/lib:/usr/local/lib:/usr/lib" > /etc/ld-musl-$(arch).path
+        chmod 0644 /etc/ld-musl-$(arch).path
+    fi
+
+    echo "${KEA_INSTALLPREFIX}/lib" >> /etc/ld-musl-$(arch).path
     ldconfig "${KEA_INSTALLPREFIX}/lib"
 }
 
