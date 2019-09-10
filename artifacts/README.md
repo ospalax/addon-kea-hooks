@@ -5,3 +5,4 @@ Here are already built artifacts of ISC Kea. I decided to include them in the re
 ## Installation directory (prefix)
 
 - `onekea-1.6.0.tar.xz`: for OpenNebula's NFV appliance
+- `onekea-1.6.0.tar.xz.sha256sum`: sha256 checksum

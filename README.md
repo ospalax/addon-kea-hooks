@@ -38,7 +38,7 @@ The archive is used as a artifact for ONE NFV appliance - rebuilding ISC Kea wit
 For OpenNebula's ONE NFV appliance there exists a handy script (adjust `MAKE_JOBS` to your setup):
 
 ```
-% extra/onekea.sh
+% ./extra/onekea.sh
 ```
 
 Or do something like this:
