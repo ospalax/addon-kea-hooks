@@ -9,11 +9,11 @@
 # make config file - it provides default values
 include Makefile.config
 
-.PHONY: all docker package clean
+.PHONY: all docker image package clean
 
-all: docker package
+all: docker image package
 
-docker: $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar
+image: $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar
 package: $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz
 
 $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
@@ -32,7 +32,12 @@ $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
 		sha256sum "$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
 			> "$(IKEA_PKG)-$(KEA_VERSION).tar.xz.sha256sum"
 
-$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: Dockerfile ikea.sh
+$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: docker
+	@echo "IKEA: SAVE DOCKER IMAGE INTO TAR..."
+	docker save -o "$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar" \
+		$(IKEA_TAG):$(KEA_VERSION)
+
+docker: Dockerfile ikea.sh
 	@echo "IKEA: START DOCKER BUILD..."
 	@mkdir -p "$(BUILD_DIR)"
 	docker build -t $(IKEA_TAG):$(KEA_VERSION) \
@@ -43,8 +48,6 @@ $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: Dockerfile ikea.sh
 		--build-arg KEEP_BUILDBLOB=$(KEEP_BUILDBLOB) \
 		--build-arg KEEP_BUILDDEPS=$(KEEP_BUILDDEPS) \
 		.
-	docker save -o "$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar" \
-		$(IKEA_TAG):$(KEA_VERSION)
 
 clean:
 	@echo "IKEA: DELETE BUILD DIR"
