@@ -18,22 +18,18 @@ package: $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz
 
 $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
 	@echo "IKEA: CREATE PACKAGE..."
-	@mkdir -p "$(BUILD_DIR)/tmp"
-	cd "$(BUILD_DIR)/tmp" && \
-		rm -rf "./$(KEA_INSTALLPREFIX)" etc && \
-		mkdir -p "./$(KEA_INSTALLPREFIX)" etc && \
-		rmdir "./$(KEA_INSTALLPREFIX)" && \
-		CID=$$(docker create --rm $(IKEA_TAG):$(KEA_VERSION)) && \
-		docker cp -a "$${CID}:$(KEA_INSTALLPREFIX)" \
-			"./$(KEA_INSTALLPREFIX)" && \
-		docker cp -a "$${CID}:/etc/ld-musl-$$(arch).path" ./etc/ && \
-		tar cJf "../$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
-			"./$(KEA_INSTALLPREFIX)" \
-			./etc/ld-musl-$$(arch).path && \
-		docker rm -f "$${CID}" && \
-		cd .. && rm -rf tmp && \
-		sha256sum "$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
-			> "$(IKEA_PKG)-$(KEA_VERSION).tar.xz.sha256sum"
+	docker run --rm -it --entrypoint /bin/sh \
+		-e "KEA_INSTALLPREFIX=$(KEA_INSTALLPREFIX)" \
+		-e "IKEA_PKG=$(IKEA_PKG)" \
+		-e "KEA_VERSION=$(KEA_VERSION)" \
+		-e "UID_GID=$$(getent passwd ${USERNAME} | cut -d":" -f3,4)" \
+		-v "$$(realpath '$(BUILD_DIR)'):/build/:rw" \
+		-v "$$(realpath ./tools/arkea.sh):/arkea.sh:ro" \
+		--user root \
+		$(IKEA_TAG):$(KEA_VERSION) \
+		/arkea.sh
+	sha256sum "$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
+		> "$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz.sha256sum"
 
 $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: Dockerfile ikea.sh
 	@echo "IKEA: START DOCKER BUILD..."
