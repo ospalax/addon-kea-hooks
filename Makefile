@@ -36,6 +36,7 @@ $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: Dockerfile ikea.sh
 	@echo "IKEA: START DOCKER BUILD..."
 	@mkdir -p "$(BUILD_DIR)"
 	docker build -t $(IKEA_TAG):$(KEA_VERSION) \
+		--build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
 		--build-arg KEA_VERSION=$(KEA_VERSION) \
 		--build-arg KEA_INSTALLPREFIX="$(KEA_INSTALLPREFIX)" \
 		--build-arg MAKE_JOBS=$(MAKE_JOBS) \

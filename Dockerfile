@@ -6,7 +6,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 
-FROM alpine:3.10
+ARG ALPINE_VERSION
+
+FROM alpine:${ALPINE_VERSION}
 LABEL maintainer="Petr Ospalý (osp) <petr@ospalax.cz>"
 
 ARG KEA_VERSION
