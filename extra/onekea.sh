@@ -3,7 +3,7 @@
 set -ex
 
 KEA_INSTALLPREFIX=/opt/one-appliance/kea
-MAKE_JOBS=6
+MAKE_JOBS="${MAKE_JOBS:-4}"
 IKEA_TAG=onekea
 IKEA_IMG=onekea-image
 IKEA_PKG=onekea
