@@ -28,8 +28,9 @@ $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
 		--user root \
 		$(IKEA_TAG):$(KEA_VERSION) \
 		/arkea.sh
-	sha256sum "$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
-		> "$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz.sha256sum"
+	cd "$(BUILD_DIR)" && \
+		sha256sum "$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
+			> "$(IKEA_PKG)-$(KEA_VERSION).tar.xz.sha256sum"
 
 $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: Dockerfile ikea.sh
 	@echo "IKEA: START DOCKER BUILD..."
