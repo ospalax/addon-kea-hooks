@@ -144,6 +144,12 @@ is_true()
 # main
 #
 
+# sanity checks first
+if [ -z "$KEA_VERSION" ] ; then
+    echo "ERROR: Variable 'KEA_VERSION' is unset" 1>&2
+    exit 1
+fi
+
 # install packages
 install_kea_runtime_deps
 install_kea_build_deps
