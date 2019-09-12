@@ -22,7 +22,7 @@ $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
 		-e "KEA_INSTALLPREFIX=$(KEA_INSTALLPREFIX)" \
 		-e "IKEA_PKG=$(IKEA_PKG)" \
 		-e "KEA_VERSION=$(KEA_VERSION)" \
-		-e "UID_GID=$$(getent passwd ${USERNAME} | cut -d":" -f3,4)" \
+		-e "UID_GID=$$(getent passwd $$(id -u) | cut -d":" -f3,4)" \
 		-v "$$(realpath '$(BUILD_DIR)'):/build/:rw" \
 		-v "$$(realpath ./tools/arkea.sh):/arkea.sh:ro" \
 		--user root \
