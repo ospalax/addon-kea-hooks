@@ -26,8 +26,8 @@ $(BUILD_DIR)/$(LIBHOOK): $(OBJECTS)
 	@printf '\n# MAKE -> Build hook library: $@\n\n'
 	@mkdir -p "$(BUILD_DIR)"
 	$(CPP) $(CPPFLAGS) $(LIBS) -fpic -shared \
-    	-I "${KEA_INSTALLPREFIX}"/include/kea \
-    	-L "${KEA_INSTALLPREFIX}"/lib \
+		-I "${KEA_INSTALLPREFIX}"/include/kea \
+		-L "${KEA_INSTALLPREFIX}"/lib \
 		$^ -o $@
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cc
@@ -35,8 +35,8 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cc
 	@printf '          Dependencies: $^\n\n'
 	@mkdir -p "$(BUILD_DIR)"
 	$(CPP) $(CPPFLAGS) $(LIBS) -fpic -shared \
-    	-I "${KEA_INSTALLPREFIX}"/include/kea \
-    	-L "${KEA_INSTALLPREFIX}"/lib \
+		-I "${KEA_INSTALLPREFIX}"/include/kea \
+		-L "${KEA_INSTALLPREFIX}"/lib \
 		-c $< -o $@
 
 install: all
