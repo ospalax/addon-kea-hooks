@@ -10,6 +10,11 @@
 
 set -ex
 
+# Stages:
+# 1. suite (ISC Kea itself)
+# 2. hooks (custom hooks)
+STAGE="${1:-suite}"
+
 KEA_INSTALLPREFIX="${KEA_INSTALLPREFIX:-/usr/local}"
 MAKE_JOBS="${MAKE_JOBS:-1}"
 
@@ -130,13 +135,6 @@ install_hooks_from_source()
 clean_apk()
 {
     apk --purge del .build-deps log4cplus-dev
-    rm -rf /var/cache/apk/*
-}
-
-clean_kea_build()
-{
-    rm -rf /ikea/kea-${KEA_VERSION}
-    rm -rf /ikea/hooks
 }
 
 # arg: <variable name>
@@ -162,26 +160,48 @@ if [ -z "$KEA_VERSION" ] ; then
     exit 1
 fi
 
-# install packages
-install_kea_runtime_deps
-install_kea_build_deps
+case "$STAGE" in
+    suite)
+        # install packages
+        install_kea_runtime_deps
+        install_kea_build_deps
 
-# build and install ISC Kea suite
-install_kea_from_source
+        # build and install ISC Kea suite
+        install_kea_from_source
 
-# build and install ISC Kea hooks
-if is_true INSTALL_HOOKS ; then
-    install_hooks_from_source
-fi
+        # delete blob?
+        if ! is_true KEEP_BUILDBLOB ; then
+            rm -rf /ikea/kea-${KEA_VERSION}*
+        fi
+        ;;
+    hooks)
+        # install packages
+        install_kea_runtime_deps
+        install_kea_build_deps
+
+        # build and install ISC Kea hooks
+        if is_true INSTALL_HOOKS ; then
+            install_hooks_from_source
+        fi
+
+        # delete blob?
+        if ! is_true KEEP_BUILDBLOB ; then
+            rm -rf /ikea/hooks
+        fi
+        ;;
+    *)
+        echo "ERROR: Unknown stage: '${STAGE}' (suite|hooks)" 1>&2
+        exit 1
+        ;;
+esac
 
 # cleanup
 if ! is_true KEEP_BUILDDEPS ; then
     clean_apk
 fi
 
-if ! is_true KEEP_BUILDBLOB ; then
-    clean_kea_build
-fi
+# delete cache
+rm -rf /var/cache/apk/*
 
 exit 0
 

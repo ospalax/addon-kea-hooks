@@ -28,14 +28,17 @@ ENV INSTALL_HOOKS "${INSTALL_HOOKS}"
 # build and install ISC Kea
 #
 
+# ikea script
 WORKDIR /ikea
-
 COPY ikea.sh ./
-COPY src/hooks/ ./hooks/
-
 RUN chmod 0755 ikea.sh
 
-RUN ./ikea.sh
+# first stage: suite
+RUN env KEEP_BUILDDEPS=yes ./ikea.sh suite
+
+# second stage: hooks
+COPY src/hooks/ ./hooks/
+RUN ./ikea.sh hooks
 
 
 ###############################################################################
@@ -66,6 +69,7 @@ RUN \
         ca-certificates \
         curl \
         xz \
+        python3 \
     && \
     apk add --no-cache \
         --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \

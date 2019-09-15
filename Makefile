@@ -40,6 +40,10 @@ $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: docker
 docker: Dockerfile ikea.sh
 	@echo "IKEA: START DOCKER BUILD..."
 	@mkdir -p "$(BUILD_DIR)"
+	@if [ -f "$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log" ] ; then \
+		mv -vf "$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log" \
+		"$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log.old" ; \
+		fi
 	docker build -t $(IKEA_TAG):$(KEA_VERSION) \
 		--build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
 		--build-arg KEA_VERSION=$(KEA_VERSION) \
@@ -48,7 +52,7 @@ docker: Dockerfile ikea.sh
 		--build-arg KEEP_BUILDBLOB=$(KEEP_BUILDBLOB) \
 		--build-arg KEEP_BUILDDEPS=$(KEEP_BUILDDEPS) \
 		--build-arg INSTALL_HOOKS=$(INSTALL_HOOKS) \
-		.
+		. | tee "$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log"
 
 clean:
 	@echo "IKEA: DELETE BUILD DIR"
