@@ -8,19 +8,20 @@ One of the VNFs for OpenNebula's NFV appliance is a dhcp and Kea with its custom
 
 ## Hooks
 
-Kea supports hooks - dnsmasq has some too, but they are triggered too late (after the lease is acutually done). Kea's hooks are very granular and hooked on many places during process, which scratches our itch.
+Kea supports hooks - dnsmasq has some too, but they are triggered too late (after the lease is actually done). Kea's hooks are more granular and hooked onto more places during the process, which scratches our itch.
 
 ## Usage
 
-First of all you need installed `docker` and `make` command. This project (if successful) will create a few artifacts:
+First of all you need installed [**`docker`**](https://www.docker.com/) and `make` command. This project (if successful) will create a few artifacts:
 
 - docker image with build and installed ISC Kea (also saved as a tar)
 - an archive with ISC Kea compiled binaries (installation prefix)
 
 The archive is used as a artifact for ONE NFV appliance - rebuilding ISC Kea with each appliance build would be too time-consuming.
 
-
 ### List default build parameters
+
+There is no `configure` script so just edit or set the environmental variables which have defaults here:
 
 ```
 % cat Makefile.config
@@ -41,11 +42,31 @@ For OpenNebula's ONE NFV appliance there exists a handy script (adjust `MAKE_JOB
 % ./extra/onekea.sh
 ```
 
+For example with eight parallel jobs (instead of the default four):
+
+```
+% MAKE_JOBS=8 ./extra/onekea.sh
+```
+
 Or do something like this:
 
 ```
 % env MAKE_JOBS=8 KEA_INSTALLPREFIX=/opt/one-appliance/kea make
 ```
+
+### Hooks
+
+To build hook(s) in this repo and package it with the artifact you must use variable `INSTALL_HOOKS` - it will build and install only that hook which has corresponding `KEA_VERSION`. Check the default version in `Makefile.config` or set it on the command line:
+
+```
+% env MAKE_JOBS=8 INSTALL_HOOKS=yes KEA_VERSION=1.6.0 make
+```
+
+Hook's source code can be found under `src/hooks` directory: `src/hooks/<hook>/<kea version>`
+
+**Even if all hooks are build, installed and packaged it does not mean that any of it will be loaded and used...what hook (library) is loaded and activated on Kea's startup is ultimately decided by your config file.**
+
+---
 
 ## Issues
 
@@ -67,4 +88,5 @@ Bugreports already existed:
 
 ### Alpine kea packages dependency problem
 
-Newest version of kea packages in Edge have broken dependency for change last time I checked.
+Newest version of kea packages in Edge have for a change broken dependency last time I checked.
+
