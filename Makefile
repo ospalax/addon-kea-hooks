@@ -47,6 +47,7 @@ docker: Dockerfile ikea.sh
 		--build-arg MAKE_JOBS=$(MAKE_JOBS) \
 		--build-arg KEEP_BUILDBLOB=$(KEEP_BUILDBLOB) \
 		--build-arg KEEP_BUILDDEPS=$(KEEP_BUILDDEPS) \
+		--build-arg INSTALL_HOOKS=$(INSTALL_HOOKS) \
 		.
 
 clean:

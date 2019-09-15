@@ -116,6 +116,17 @@ install_kea_from_source()
     ldconfig "${KEA_INSTALLPREFIX}/lib"
 }
 
+install_hooks_from_source()
+{
+    for hook in /ikea/hooks/*/ ; do
+        if [ -d "${hook}/${KEA_VERSION}" ] ; then
+            cd "${hook}/${KEA_VERSION}"
+            make install
+            cd -
+        fi
+    done
+}
+
 clean_apk()
 {
     apk --purge del .build-deps log4cplus-dev
@@ -125,6 +136,7 @@ clean_apk()
 clean_kea_build()
 {
     rm -rf /ikea/kea-${KEA_VERSION}
+    rm -rf /ikea/hooks
 }
 
 # arg: <variable name>
@@ -154,8 +166,13 @@ fi
 install_kea_runtime_deps
 install_kea_build_deps
 
-# build and install
+# build and install ISC Kea suite
 install_kea_from_source
+
+# build and install ISC Kea hooks
+if is_true INSTALL_HOOKS ; then
+    install_hooks_from_source
+fi
 
 # cleanup
 if ! is_true KEEP_BUILDDEPS ; then

@@ -2,8 +2,8 @@
 *~bak
 *bak~
 
-# build dir
-/build/
+# ignore all build dirs
+**/build/
 
 # my notes
 NOTES*
