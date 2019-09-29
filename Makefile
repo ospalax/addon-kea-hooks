@@ -44,15 +44,28 @@ docker: Dockerfile ikea.sh
 		mv -vf "$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log" \
 		"$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log.old" ; \
 		fi
-	docker build -t $(IKEA_TAG):$(KEA_VERSION) \
-		--build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
-		--build-arg KEA_VERSION=$(KEA_VERSION) \
-		--build-arg KEA_INSTALLPREFIX="$(KEA_INSTALLPREFIX)" \
-		--build-arg MAKE_JOBS=$(MAKE_JOBS) \
-		--build-arg KEEP_BUILDBLOB=$(KEEP_BUILDBLOB) \
-		--build-arg KEEP_BUILDDEPS=$(KEEP_BUILDDEPS) \
-		--build-arg INSTALL_HOOKS=$(INSTALL_HOOKS) \
-		. | tee "$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log"
+	env \
+		IKEA_TAG="$(IKEA_TAG)" \
+		KEA_VERSION="$(KEA_VERSION)" \
+		ALPINE_VERSION="$(ALPINE_VERSION)" \
+		KEA_INSTALLPREFIX="$(KEA_INSTALLPREFIX)" \
+		MAKE_JOBS="$(MAKE_JOBS)" \
+		KEEP_BUILDBLOB="$(KEEP_BUILDBLOB)" \
+		KEEP_BUILDDEPS="$(KEEP_BUILDDEPS)" \
+		INSTALL_HOOKS="$(INSTALL_HOOKS)" \
+		BUILD_DIR="$(BUILD_DIR)" \
+		tools/docker-build.sh
+# It could be so simple, but that pipe with tee is hiding the failure of the
+# docker build command (if there is an error)...
+#	docker build -t $(IKEA_TAG):$(KEA_VERSION) \
+#		--build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
+#		--build-arg KEA_VERSION=$(KEA_VERSION) \
+#		--build-arg KEA_INSTALLPREFIX="$(KEA_INSTALLPREFIX)" \
+#		--build-arg MAKE_JOBS=$(MAKE_JOBS) \
+#		--build-arg KEEP_BUILDBLOB=$(KEEP_BUILDBLOB) \
+#		--build-arg KEEP_BUILDDEPS=$(KEEP_BUILDDEPS) \
+#		--build-arg INSTALL_HOOKS=$(INSTALL_HOOKS) \
+#		. | tee "$(BUILD_DIR)/$(IKEA_TAG)-$(KEA_VERSION)-build.log"
 
 clean:
 	@echo "IKEA: DELETE BUILD DIR"
