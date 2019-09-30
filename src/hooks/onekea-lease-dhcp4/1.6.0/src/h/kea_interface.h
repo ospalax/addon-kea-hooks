@@ -18,6 +18,9 @@
 extern int KEA_SUCCESS;
 extern int KEA_FAILURE;
 
+// Hook can be loaded but it may be disabled...
+extern bool onekea_dhcp4_lease_enabled;
+
 // Debug log (if enabled)
 extern std::fstream debug_logfile;
 

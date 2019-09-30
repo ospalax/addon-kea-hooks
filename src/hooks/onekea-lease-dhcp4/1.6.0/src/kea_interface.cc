@@ -24,6 +24,9 @@ using namespace isc::data;
 int KEA_SUCCESS = 0;
 int KEA_FAILURE = 1;
 
+// Hook can be loaded but it may be disabled...
+bool onekea_dhcp4_lease_enabled = true;
+
 // Debug log (if enabled)
 std::fstream debug_logfile;
 
@@ -45,10 +48,12 @@ extern "C" {
         // these are parameters in the config (all have defaults...)
         // for example:
         // "parameters": {
+        //     "enabled": true,
         //     "logger-name": "onekea-lease-dhcp4",
         //     "debug": true,
         //     "debug-logfile": "/var/log/onekea-lease-dhcp4-debug.log"
         // }
+        ConstElementPtr param_enabled = handle.getParameter("enabled");
         ConstElementPtr param_debug = handle.getParameter("debug");
         ConstElementPtr param_debug_logfile = handle.getParameter("debug-logfile");
         ConstElementPtr param_logger_name = handle.getParameter("logger-name");
@@ -59,6 +64,14 @@ extern "C" {
         std::string logger_name = "onekea-lease-dhcp4";
 
         // check parameters
+
+        if (param_enabled)
+        {
+            if (param_enabled->getType() != Element::boolean) {
+                return (KEA_FAILURE);
+            }
+            onekea_dhcp4_lease_enabled = param_enabled->boolValue();
+        }
 
         if (param_debug)
         {
@@ -93,7 +106,13 @@ extern "C" {
             // let's dump a testing message to the debug log
             debug_logfile \
                 << "DEBUG> [ONEKEA STARTED]: " << logger_name \
+                << "\n" \
+                << "DEBUG> ONEKEA dhcp4 lease hook: " << \
+                    std::string(onekea_dhcp4_lease_enabled \
+                            ? "ENABLED" : "DISABLED") \
                 << "\n";
+
+            // to guard against a crash, we'll flush the output stream
             flush(debug_logfile);
 
             return (debug_logfile ? KEA_SUCCESS : KEA_FAILURE);

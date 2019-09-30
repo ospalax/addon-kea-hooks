@@ -13,6 +13,17 @@
 // do not put any code BEFORE these two lines
 
 
+#include <hooks/hooks.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/lease.h>
+
+
+// Here we do all the 'lease' assignment work
+int onekea_lease4(isc::hooks::CalloutHandle& handle,
+                  isc::dhcp::Subnet4Ptr subnet4_ptr,
+                  isc::dhcp::Lease4Ptr lease4_ptr,
+                  const std::string callout_name);
+
 // do not put any code AFTER this line
 #endif // SAFEGUARD__ONELEASE_H_HEADER__
 
