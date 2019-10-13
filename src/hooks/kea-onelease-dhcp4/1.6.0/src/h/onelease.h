@@ -17,12 +17,28 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease.h>
 
+#include <vector>
+#include <exception>
 
-// Here we do all the 'lease' assignment work
-int onekea_lease4(isc::hooks::CalloutHandle& handle,
+// My exceptions
+class ErrEmptyIPv4Str : public std::exception
+{
+   virtual const char * what () const throw ()
+   {
+      return "Empty IPv4 address string!";
+   }
+};
+
+// Here we do all the 'onelease' assignment work
+int kea_onelease4(isc::hooks::CalloutHandle& handle,
                   isc::dhcp::Subnet4Ptr subnet4_ptr,
                   isc::dhcp::Lease4Ptr lease4_ptr,
                   const std::string callout_name);
+
+// Checks and compares the byte prefix with the HW address
+bool match_byte_prefix(const std::vector<uint8_t> &byte_prefix,
+                       const std::vector<uint8_t> &hw_addr);
+
 
 // do not put any code AFTER this line
 #endif // SAFEGUARD__ONELEASE_H_HEADER__

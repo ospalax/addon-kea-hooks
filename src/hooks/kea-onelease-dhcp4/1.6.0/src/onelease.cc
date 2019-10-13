@@ -38,7 +38,7 @@ extern "C" {
     int pkt4_receive(CalloutHandle& handle) {
         // if hook is disabled and debug_logfile is not opened then we can skip
         // this and any other callout...
-        if (!(onekea_dhcp4_lease_enabled || debug_logfile))
+        if (!(kea_onelease4_enabled || debug_logfile))
             return KEA_SUCCESS;
 
         // A pointer to the packet is passed to the callout via a "boost" smart
@@ -57,11 +57,11 @@ extern "C" {
         std::string hwaddr_str = hwaddr_ptr->toText();
         handle.setContext("hwaddr_str", hwaddr_str);
 
-        // Store OpenNebula's specific part of the HW address (after 02:00) as
-        // an ip address which is created by simple conversion from HW address.
-        // Or leave it empty if it is not starting with the '02:00'...
+        // Store the last four bytes of the HW address as an ip address which
+        // is created by simple conversion from said HW address - or leave it
+        // empty if it does not match byte prefix...
         std::string oneaddr_str = "";
-        if ((hwaddr_ptr->hwaddr_[0] == 0x02) && (!(hwaddr_ptr->hwaddr_[1])))
+        if (match_byte_prefix(kea_onelease4_byte_prefix, hwaddr_ptr->hwaddr_))
         {
             for (unsigned int i = 2; i < hwaddr_ptr->hwaddr_.size(); ++i) {
                 oneaddr_str += std::to_string(hwaddr_ptr->hwaddr_[i]);
@@ -81,7 +81,7 @@ extern "C" {
     //  name: lease4, type: isc::dhcp::Lease4Ptr, direction: in/out
     int lease4_select(CalloutHandle& handle) {
         // If not enabled then do nothing...
-        if (!(onekea_dhcp4_lease_enabled))
+        if (!(kea_onelease4_enabled))
             return KEA_SUCCESS;
 
         // Pkt4Ptr query4_ptr;      // IN
@@ -89,7 +89,7 @@ extern "C" {
         Lease4Ptr lease4_ptr;       // IN/OUT
         // bool fake_allocation;    // IN (I don't have use for it for now)
 
-        return onekea_lease4(handle, subnet4_ptr, lease4_ptr, "lease4_select");
+        return kea_onelease4(handle, subnet4_ptr, lease4_ptr, "lease4_select");
     }
 
     // This callout is called at the "lease4_renew" hook.
@@ -101,7 +101,7 @@ extern "C" {
     //  name: lease4, type: isc::dhcp::Lease4Ptr, direction: in/out
     int lease4_renew(CalloutHandle& handle) {
         // If not enabled then do nothing...
-        if (!(onekea_dhcp4_lease_enabled))
+        if (!(kea_onelease4_enabled))
             return KEA_SUCCESS;
 
         // This callout is practically the same as for the lease4_select...
@@ -109,7 +109,7 @@ extern "C" {
         Subnet4Ptr subnet4_ptr;     // IN
         Lease4Ptr lease4_ptr;       // IN/OUT
 
-        return onekea_lease4(handle, subnet4_ptr, lease4_ptr, "lease4_renew");
+        return kea_onelease4(handle, subnet4_ptr, lease4_ptr, "lease4_renew");
     }
 
     // This callout is called at the "pkt4_send" hook.
@@ -119,7 +119,7 @@ extern "C" {
     int pkt4_send(CalloutHandle& handle) {
         // if hook is disabled and debug_logfile is not opened then we can skip
         // this and any other callout...
-        if (!(onekea_dhcp4_lease_enabled || debug_logfile))
+        if (!(kea_onelease4_enabled || debug_logfile))
             return KEA_SUCCESS;
 
         std::string hwaddr_str;
@@ -159,8 +159,11 @@ extern "C" {
 
 }
 
-// This is a helper function and does not need to be inside extern C linkage...
-int onekea_lease4(CalloutHandle& handle,
+
+// These are helper functions and they do not need to be inside extern C
+// linkage...
+
+int kea_onelease4(CalloutHandle& handle,
                   Subnet4Ptr subnet4_ptr,
                   Lease4Ptr lease4_ptr,
                   const std::string callout_name)
@@ -178,6 +181,10 @@ int onekea_lease4(CalloutHandle& handle,
         handle.getContext("oneaddr_str", oneaddr_str);
 
         // Check ONE address if it is acceptable
+        if (oneaddr_str.empty())
+            throw ErrEmptyIPv4Str();
+
+        // Try to convert string into IPv4 representation
         isc::asiolink::IOAddress
             oneaddr = isc::asiolink::IOAddress(oneaddr_str);
 
@@ -199,7 +206,7 @@ int onekea_lease4(CalloutHandle& handle,
             // structure during the lifetime of the hook (load->unload).
             //
             // But we can cheat here in our case because:
-            // 1. our ONE address is in the right subnet and the right  pool
+            // 1. our ONE address is in the right subnet and the right pool
             // 2. our ONE address is based on the HW/MAC address
             // 3. HW/MAC address should be unique
             //
@@ -252,9 +259,40 @@ int onekea_lease4(CalloutHandle& handle,
         }
     } catch (const NoSuchCalloutContext&) {
         // No such element in the per-request context (hwaddr_str, oneaddr_str)
+    } catch (const ErrEmptyIPv4Str&) {
+        if (debug_logfile)
+        {
+            // Write the information to the log file.
+            debug_logfile \
+                << "DEBUG> " << callout_name << " [SKIPPED]:" \
+                << " ONE address is empty (non-matching byte prefix):" \
+                << " HW address: '" << hwaddr_str << "'" \
+                << ", ONE HW/IP: '" << oneaddr_str << "'" \
+                << "\n";
+
+            // to guard against a crash, we'll flush the output stream
+            flush(debug_logfile);
+        }
     }
 
     return (KEA_SUCCESS);
+}
+
+bool match_byte_prefix(const std::vector<uint8_t> &byte_prefix,
+                       const std::vector<uint8_t> &hw_addr)
+{
+    // no byte prefix was configured - we are accepting all...
+    if (byte_prefix.size() == 0)
+        return true;
+
+    // byte prefix should be only two bytes long, but maybe in the future we
+    // will want to match more bytes...
+    for (unsigned int i = 0; i < byte_prefix.size(); ++i) {
+        if (byte_prefix[i] != hw_addr[i])
+            return false;
+    }
+
+    return true;
 }
 
 

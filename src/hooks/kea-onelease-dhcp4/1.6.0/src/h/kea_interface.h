@@ -13,13 +13,23 @@
 // do not put any code BEFORE these two lines
 
 #include <fstream>
+#include <vector>
 
 // Kea return values
 extern int KEA_SUCCESS;
 extern int KEA_FAILURE;
 
 // Hook can be loaded but it may be disabled...
-extern bool onekea_dhcp4_lease_enabled;
+extern bool kea_onelease4_enabled;
+
+// By default all prefixes are accepted, otherwise it will expect a string
+// representing a two-byte hexadecimal value, eg:
+//  00:FF
+//  00 FF
+//  00FF
+//  0x00FF
+// This string will be converted to a byte array (vector)
+extern std::vector<uint8_t> kea_onelease4_byte_prefix;
 
 // Debug log (if enabled)
 extern std::fstream debug_logfile;

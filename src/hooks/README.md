@@ -6,9 +6,32 @@ Documentation for Kea and hooks:
 - https://jenkins.isc.org/job/Kea_doc/doxygen/df/d46/hooksdgDevelopersGuide.html
 - https://jenkins.isc.org/job/Kea_doc/doxygen/de/df3/dhcpv4Hooks.html
 
-## ONE Kea Lease Hook
+## Kea ONElease Hook
 
-This is quite a simple hook to implement OpenNebula's NFV appliance requirement: assign IPv4 address (via DHCP) from MAC address value.
+This is quite a simple hook to assign ONE lease for a client based on its HW (MAC) address. It will work properly only if clients have HW addresses generated in a particular way: **the last four bytes represent an IP address**
+
+### For example:
+
+We have a client with this HW address:
+
+```
+02:00:c0:a8:e9:64
+```
+
+First two bytes must match the hook parameter `byte-prefix` (in this case: `02` and `00`) and the rest is interpretated like this:
+
+- `c0` is hexadecimal for decimal: `192`
+- `a8` is hexadecimal for decimal: `168`
+- `e9` is hexadecimal for decimal: `233`
+- `64` is hexadecimal for decimal: `100`
+
+It means that the ONE lease will be: `192.168.233.100`
+
+Of course the ONE lease must meet subnet and pool constraints first...
+
+### OpenNebula
+
+The motivation for this hook is from OpenNebula's VNFs appliance requirement: assign IPv4 address (via DHCP) from MAC address value.
 
 OpenNebula generates MAC addresses for VM's network interfaces in a particular way. Every virtual interface is assigned to some specific network with specific subnet/range. By default there is no DHCP service but OpenNebula assigns (internally) some (mostly the lowest unassigned) valid IPv4 from this range regardless and if the user enables the `NETWORK CONTEXT` then OpenNebula will setup VM with this static address.
 
@@ -38,11 +61,7 @@ and the generated MAC address will be:
 02:00:c0:a8:e9:64
 ```
 
-First two bytes are always `02` and `00` (two and zero) and the rest match like this:
-
-- `c0` is hexadecimal for decimal: `192`
-- `a8` is hexadecimal for decimal: `168`
-- `e9` is hexadecimal for decimal: `233`
-- `64` is hexadecimal for decimal: `100`
+*Note: To see how the MAC address relates to IP look above in the intro.*
 
 The point of this hook is to honor this inner working of OpenNebula to not confuse users and for VMs to have a convenient and predicable dynamic addresses...
+

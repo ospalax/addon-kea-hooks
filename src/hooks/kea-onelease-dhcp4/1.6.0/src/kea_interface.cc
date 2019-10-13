@@ -16,16 +16,21 @@
 
 #include <hooks/hooks.h>
 #include <cc/data.h>
+#include <util/strutil.h>
 
 using namespace isc::hooks;
 using namespace isc::data;
+using namespace isc::util;
 
 // Kea has reversed boolean values...
 int KEA_SUCCESS = 0;
 int KEA_FAILURE = 1;
 
 // Hook can be loaded but it may be disabled...
-bool onekea_dhcp4_lease_enabled = true;
+bool kea_onelease4_enabled = true;
+
+// By default all prefixes are accepted or only specific first two bytes...
+std::vector<uint8_t> kea_onelease4_byte_prefix;
 
 // Debug log (if enabled)
 std::fstream debug_logfile;
@@ -49,34 +54,57 @@ extern "C" {
         // for example:
         // "parameters": {
         //     "enabled": true,
-        //     "logger-name": "onekea-lease-dhcp4",
+        //     "byte-prefix": "",
+        //     "logger-name": "kea-onelease-dhcp4",
         //     "debug": true,
-        //     "debug-logfile": "/var/log/onekea-lease-dhcp4-debug.log"
+        //     "debug-logfile": "/var/log/kea-onelease-dhcp4-debug.log"
         // }
         ConstElementPtr param_enabled = handle.getParameter("enabled");
+        ConstElementPtr param_byte_prefix = handle.getParameter("byte-prefix");
+        ConstElementPtr param_logger_name = handle.getParameter("logger-name");
         ConstElementPtr param_debug = handle.getParameter("debug");
         ConstElementPtr param_debug_logfile = handle.getParameter("debug-logfile");
-        ConstElementPtr param_logger_name = handle.getParameter("logger-name");
 
         // set defaults
         bool debug = false;
-        std::string debug_filename = "/var/log/onekea-lease-dhcp4-debug.log";
-        std::string logger_name = "onekea-lease-dhcp4";
+        std::string debug_filename = "/var/log/kea-onelease-dhcp4-debug.log";
+        std::string logger_name = "kea-onelease-dhcp4";
 
         // check parameters
 
         if (param_enabled)
         {
             if (param_enabled->getType() != Element::boolean) {
-                return (KEA_FAILURE);
+                isc_throw(isc::BadValue,
+                          "Parameter 'enabled' must be boolean!");
             }
-            onekea_dhcp4_lease_enabled = param_enabled->boolValue();
+            kea_onelease4_enabled = param_enabled->boolValue();
+        }
+
+        if (param_byte_prefix)
+        {
+            if (param_byte_prefix->getType() != Element::string) {
+                isc_throw(isc::BadValue,
+                          "Parameter 'byte-prefix' must be string!");
+            }
+            isc::util::str::decodeFormattedHexString(
+                    param_byte_prefix->stringValue(),
+                    kea_onelease4_byte_prefix);
+
+            // validate prefix
+            if (!((kea_onelease4_byte_prefix.size() == 0)
+                || (kea_onelease4_byte_prefix.size() == 2)))
+            {
+                isc_throw(isc::BadValue,
+                          "Wrong byte prefix - should be zero or two bytes!");
+            }
         }
 
         if (param_debug)
         {
             if (param_debug->getType() != Element::boolean) {
-                return (KEA_FAILURE);
+                isc_throw(isc::BadValue,
+                          "Parameter 'debug' must be boolean!");
             }
             debug = param_debug->boolValue();
         }
@@ -84,7 +112,8 @@ extern "C" {
         if (param_debug_logfile)
         {
             if (param_debug_logfile->getType() != Element::string) {
-                return (KEA_FAILURE);
+                isc_throw(isc::BadValue,
+                          "Parameter 'debug-logfile' must be string!");
             }
             debug_filename = param_debug_logfile->stringValue();
         }
@@ -92,7 +121,8 @@ extern "C" {
         if (param_logger_name)
         {
             if (param_logger_name->getType() != Element::string) {
-                return (KEA_FAILURE);
+                isc_throw(isc::BadValue,
+                          "Parameter 'logger-name' must be string!");
             }
             logger_name = param_logger_name->stringValue();
         }
@@ -105,10 +135,10 @@ extern "C" {
 
             // let's dump a testing message to the debug log
             debug_logfile \
-                << "DEBUG> [ONEKEA STARTED]: " << logger_name \
+                << "DEBUG> [KEA-DHCP4 STARTED]: " << logger_name \
                 << "\n" \
-                << "DEBUG> ONEKEA dhcp4 lease hook: " << \
-                    std::string(onekea_dhcp4_lease_enabled \
+                << "DEBUG> onelease hook: " << \
+                    std::string(kea_onelease4_enabled \
                             ? "ENABLED" : "DISABLED") \
                 << "\n";
 
@@ -130,7 +160,7 @@ extern "C" {
         if (debug_logfile) {
             // closing debug log with last message
             debug_logfile \
-                << "DEBUG> [ONEKEA ENDED]" \
+                << "DEBUG> [KEA-DHCP4 ENDED]" \
                 << "\n\n";
 
             debug_logfile.close();
