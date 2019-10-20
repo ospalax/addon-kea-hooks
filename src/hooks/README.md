@@ -29,6 +29,47 @@ It means that the ONE lease will be: `192.168.233.100`
 
 Of course the ONE lease must meet subnet and pool constraints first...
 
+### Usage
+
+To enable and use this hook - insert similar json under `hooks-libraries` in your config:
+
+```
+"hooks-libraries": [
+    ...
+    {
+        "library": "/opt/kea/lib/kea/hooks/libkea-onelease-dhcp4.so",
+        "parameters": {
+            "enabled": true,
+            "byte-prefix": "00:02",
+            "subnet": "192.168.233.0/24",
+            "logger-name": "onelease-dhcp4",
+            "debug": true,
+            "debug-logfile": "/var/log/onelease-dhcp4-debug.log"
+        }
+    }
+    ...
+]
+```
+
+All parameters are optional so you can just use:
+
+```
+{
+    "library": "/opt/kea/lib/kea/hooks/libkea-onelease-dhcp4.so"
+}
+```
+
+#### Hook parameters
+
+- `enabled` (`boolean`) - enable/disable the function of this hook
+- `byte-prefix` (`string`) - hexadecimal representation of the first two bytes in HW address
+- `subnet` (`string`) - subnet in CIDR (hook applies only to these clients)
+- `logger-name` (`string`) - identification in the debug log
+- `debug` (`boolean`) - enable/disable the debug log
+- `debug-logfile` (`string`) - filename for the debug log
+
+`byte-prefix` and `subnet` are basically conditionals - they must be both true or the normal lease procedure will take place. If they are not defined then it is like they are always true. They give us better control to select which packets this hook should handle and which packets should be processed normally.
+
 ### OpenNebula
 
 The motivation for this hook is from OpenNebula's VNFs appliance requirement: assign IPv4 address (via DHCP) from MAC address value.

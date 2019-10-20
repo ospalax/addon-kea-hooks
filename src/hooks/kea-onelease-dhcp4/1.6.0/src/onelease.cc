@@ -182,11 +182,15 @@ int kea_onelease4(CalloutHandle& handle,
 
         // Check ONE address if it is acceptable
         if (oneaddr_str.empty())
-            throw ErrEmptyIPv4Str();
+            throw EmptyIPv4Str();
 
         // Try to convert string into IPv4 representation
         isc::asiolink::IOAddress
             oneaddr = isc::asiolink::IOAddress(oneaddr_str);
+
+        // Do not apply hook if ONE subnet restriction is invalid
+        if (!is_onelease4_in_range(oneaddr, kea_onelease4_subnet))
+            throw NonMatchingSubnet();
 
         // The inRange() test is actually redundant because it is also done
         // in the method inPool() but I know that only because I looked
@@ -238,7 +242,7 @@ int kea_onelease4(CalloutHandle& handle,
         }
         else
         {
-            // We skip this packet because the ONE address cannot fit the
+            // We reject this packet because the ONE address cannot fit the
             // range or any of the pools...
             handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
             lease4_ptr->decline(0);
@@ -247,7 +251,7 @@ int kea_onelease4(CalloutHandle& handle,
             {
                 // Write the information to the log file.
                 debug_logfile \
-                    << "DEBUG> " << callout_name << " [SKIPPED]:" \
+                    << "DEBUG> " << callout_name << " [REJECTED]:" \
                     << " ONE address mismatches with range/pool:" \
                     << " HW address: '" << hwaddr_str << "'" \
                     << ", ONE HW/IP: '" << oneaddr_str << "'" \
@@ -259,7 +263,7 @@ int kea_onelease4(CalloutHandle& handle,
         }
     } catch (const NoSuchCalloutContext&) {
         // No such element in the per-request context (hwaddr_str, oneaddr_str)
-    } catch (const ErrEmptyIPv4Str&) {
+    } catch (const EmptyIPv4Str&) {
         if (debug_logfile)
         {
             // Write the information to the log file.
@@ -267,7 +271,21 @@ int kea_onelease4(CalloutHandle& handle,
                 << "DEBUG> " << callout_name << " [SKIPPED]:" \
                 << " ONE address is empty (non-matching byte prefix):" \
                 << " HW address: '" << hwaddr_str << "'" \
+                << "\n";
+
+            // to guard against a crash, we'll flush the output stream
+            flush(debug_logfile);
+        }
+    } catch (const NonMatchingSubnet&) {
+        if (debug_logfile)
+        {
+            // Write the information to the log file.
+            debug_logfile \
+                << "DEBUG> " << callout_name << " [SKIPPED]:" \
+                << " ONE address is not in the hook's subnet range:" \
+                << " HW address: '" << hwaddr_str << "'" \
                 << ", ONE HW/IP: '" << oneaddr_str << "'" \
+                << ", ONE subnet: '" << kea_onelease4_subnet << "'" \
                 << "\n";
 
             // to guard against a crash, we'll flush the output stream
@@ -293,6 +311,31 @@ bool match_byte_prefix(const std::vector<uint8_t> &byte_prefix,
     }
 
     return true;
+}
+
+bool is_onelease4_in_range(const isc::asiolink::IOAddress &ip_addr,
+                           const std::string subnet_str)
+{
+    // is subnet parameter used?
+    if (subnet_str.empty())
+        return true;
+
+    // create subnet based on the parameter
+    Subnet4Ptr subnet4_ptr = create_subnet4(subnet_str);
+
+    if (!(subnet4_ptr->inRange(ip_addr)))
+            return false;
+
+    return true;
+}
+
+isc::dhcp::Subnet4Ptr create_subnet4(const std::string subnet_str)
+{
+    size_t pos = subnet_str.find("/");
+    isc::asiolink::IOAddress addr(subnet_str.substr(0, pos));
+    size_t len = boost::lexical_cast<unsigned int>(subnet_str.substr(pos + 1));
+
+    return (isc::dhcp::Subnet4Ptr(new isc::dhcp::Subnet4(addr, len, 1000, 2000, 3000, 1)));
 }
 
 

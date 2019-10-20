@@ -17,7 +17,9 @@
 #include <hooks/hooks.h>
 #include <cc/data.h>
 #include <util/strutil.h>
+#include <dhcpsrv/subnet.h>
 
+using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::data;
 using namespace isc::util;
@@ -28,6 +30,9 @@ int KEA_FAILURE = 1;
 
 // Hook can be loaded but it may be disabled...
 bool kea_onelease4_enabled = true;
+
+// Optional subnet prefix
+std::string kea_onelease4_subnet = "";
 
 // By default all prefixes are accepted or only specific first two bytes...
 std::vector<uint8_t> kea_onelease4_byte_prefix;
@@ -61,6 +66,7 @@ extern "C" {
         // }
         ConstElementPtr param_enabled = handle.getParameter("enabled");
         ConstElementPtr param_byte_prefix = handle.getParameter("byte-prefix");
+        ConstElementPtr param_subnet = handle.getParameter("subnet");
         ConstElementPtr param_logger_name = handle.getParameter("logger-name");
         ConstElementPtr param_debug = handle.getParameter("debug");
         ConstElementPtr param_debug_logfile = handle.getParameter("debug-logfile");
@@ -97,6 +103,24 @@ extern "C" {
             {
                 isc_throw(isc::BadValue,
                           "Wrong byte prefix - should be zero or two bytes!");
+            }
+        }
+
+        if (param_subnet)
+        {
+            if (param_subnet->getType() != Element::string) {
+                isc_throw(isc::BadValue,
+                          "Parameter 'subnet' must be string!");
+            }
+            kea_onelease4_subnet = param_subnet->stringValue();
+
+            // validate subnet prefix
+            std::pair<isc::asiolink::IOAddress, uint8_t> parsed =
+                parse_subnet_prefix(kea_onelease4_subnet);
+            if (!parsed.first.isV4() || parsed.first.isV4Zero() ||
+                (parsed.second > 32) || (parsed.second == 0)) {
+                isc_throw(isc::BadValue,
+                        "unable to parse invalid IPv4 prefix " << kea_onelease4_subnet);
             }
         }
 
@@ -169,6 +193,30 @@ extern "C" {
         return (KEA_SUCCESS);
     }
 
+}
+
+
+// These are helper functions and they do not need to be inside extern C
+// linkage...
+
+std::pair<isc::asiolink::IOAddress, uint8_t>
+parse_subnet_prefix(const std::string& prefix)
+{
+    auto pos = prefix.find('/');
+    if ((pos == std::string::npos) ||
+        (pos == prefix.size() - 1) ||
+        (pos == 0)) {
+        isc_throw(isc::BadValue, "unable to parse invalid prefix " << prefix);
+    }
+
+    try {
+        isc::asiolink::IOAddress address(prefix.substr(0, pos));
+        int length = boost::lexical_cast<int>(prefix.substr(pos + 1));
+        return (std::make_pair(address, static_cast<int>(length)));
+
+    } catch (...) {
+        isc_throw(isc::BadValue, "unable to parse invalid prefix " << prefix);
+    }
 }
 
 

@@ -21,11 +21,19 @@
 #include <exception>
 
 // My exceptions
-class ErrEmptyIPv4Str : public std::exception
+class EmptyIPv4Str : public std::exception
 {
    virtual const char * what () const throw ()
    {
       return "Empty IPv4 address string!";
+   }
+};
+
+class NonMatchingSubnet : public std::exception
+{
+   virtual const char * what () const throw ()
+   {
+      return "ONElease address does not match with subnet parameter!";
    }
 };
 
@@ -38,6 +46,14 @@ int kea_onelease4(isc::hooks::CalloutHandle& handle,
 // Checks and compares the byte prefix with the HW address
 bool match_byte_prefix(const std::vector<uint8_t> &byte_prefix,
                        const std::vector<uint8_t> &hw_addr);
+
+// Check if our ONE lease address is within the ONE subnet
+// (if ONE subnet is not used then it always returns true)
+bool is_onelease4_in_range(const isc::asiolink::IOAddress &ip_addr,
+                           const std::string subnet_str);
+
+// Returns Kea structure representing the subnet (smartpointer)
+isc::dhcp::Subnet4Ptr create_subnet4(const std::string subnet_str);
 
 
 // do not put any code AFTER this line
