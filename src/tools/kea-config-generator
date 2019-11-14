@@ -229,12 +229,28 @@ def return_globaloptions(params):
         return options
 
 
+    def fix_routers(options = [], routers = []):
+        """ Returns options with global routers option-data (if used). """
+
+        option = {}
+        option["name"] = "routers"
+        option["data"] = ", ".join(routers)
+
+        options.append(option)
+
+        return options
+
+
     # explicitly configured option-data or empty list
     options = params.get("option-data", [])
 
     # explicitly configured nameservers - merge and extend
     if params.get("domain-name-servers"):
         options = fix_nameservers(options, params["domain-name-servers"])
+
+    # explicitly configured routers
+    if params.get("routers"):
+        options = fix_routers(options, params["routers"])
 
     return options
 
@@ -519,12 +535,14 @@ def get_params():
 
     @validate_json_decorator
     def validate_option_data(arg_str, option_data = None):
-        if (not ((isinstance(option_data.get("name"), str)
+        if (not (((isinstance(option_data.get("name"), str)
             and len(option_data["name"]))
-            or isinstance(option_data.get("code"), int))):
+            or isinstance(option_data.get("code"), int))
+            and (isinstance(option_data.get("data"), str)))):
             # ugly python syntax
             raise argparse.ArgumentTypeError(
-                "Option-data object has to have 'name' or 'code' field!")
+                "Option-data object has to have 'name' or 'code' field and"
+                " 'data'!")
 
         return option_data
 
@@ -599,10 +617,19 @@ def get_params():
                         metavar="<nameserver-ipv4>",
                         action='append',
                         type=validate_ipv4,
-                        help="Domain name server IPv4 address"
-                        " (e.g.: 8.8.8.8). This argument can be used multiple"
+                        help="Domain name server IPv4 address (global)"
+                        " (Default: None). This argument can be used multiple"
                         " of times. These nameservers take precedence over"
                         " others found in option-data (if used).")
+    parser.add_argument("-r", "--router",
+                        dest="routers",
+                        required=False,
+                        metavar="<router-ipv4>",
+                        action='append',
+                        type=validate_ipv4,
+                        help="Router's IPv4 address (global)"
+                        " (Default: None). This argument can be used multiple"
+                        " of times.")
     parser.add_argument("-o", "--option-data",
                         required=False,
                         metavar="<option-data-json>",

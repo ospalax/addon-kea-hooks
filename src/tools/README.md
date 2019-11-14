@@ -15,9 +15,9 @@ This script helps to generate Kea's config file (e.g.: `kea-dhcp4.conf`) from sc
 usage: kea-config-generator [-h] [-t <lease-time-seconds>] [-a]
                             [-l <logfile-name>] [-d <lease-database-json>]
                             [-i <iface[/<ipv4>]>] [-n <nameserver-ipv4>]
-                            [-o <option-data-json>] [-s <subnet4-json>]
-                            [-x <hook-json>] [-L <logger-json>]
-                            [-I <id-number>]
+                            [-r <router-ipv4>] [-o <option-data-json>]
+                            [-s <subnet4-json>] [-x <hook-json>]
+                            [-L <logger-json>] [-I <id-number>]
 
 ISC Kea dhcp4 config generator - it generates dhcp4 config file and its
 content can be modified by varies options. The result is then simply printed
@@ -40,10 +40,13 @@ optional arguments:
                         or better eth0/<ipv4>). This argument can be used
                         multiple of times.
   -n <nameserver-ipv4>, --domain-name-server <nameserver-ipv4>
-                        Domain name server IPv4 address (e.g.: 8.8.8.8). This
-                        argument can be used multiple of times. These
-                        nameservers take precedence over others found in
+                        Domain name server IPv4 address (global) (Default:
+                        None). This argument can be used multiple of times.
+                        These nameservers take precedence over others found in
                         option-data (if used).
+  -r <router-ipv4>, --router <router-ipv4>
+                        Router's IPv4 address (global) (Default: None). This
+                        argument can be used multiple of times.
   -o <option-data-json>, --option-data <option-data-json>
                         JSON value representing option-data object (Default:
                         None). This argument can be used multiple of times.
