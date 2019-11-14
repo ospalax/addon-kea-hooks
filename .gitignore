@@ -10,3 +10,6 @@ NOTES*
 
 # mix of research materials
 /resources
+
+# Vi(m)'s swap files
+*.swp
