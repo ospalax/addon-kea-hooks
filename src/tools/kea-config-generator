@@ -205,18 +205,16 @@ def return_globaloptions(params):
         """
 
         # filter-out domain-name-servers option-data
+        # and append new nameservers to nameservers from argument
         filtered_options = []
-        for option in options:
-            if option.get("name") != "domain-name-servers":
-                filtered_options.append(option)
-
-        # find other nameservers
         for option in options:
             if option.get("name") == "domain-name-servers":
                 option_nameservers = re.sub(r'\s+', '', option["data"]).split(",")
                 for nameserver in option_nameservers:
                     if nameserver not in nameservers:
                         nameservers.append(nameserver)
+            else:
+                filtered_options.append(option)
 
         option = {}
         option["name"] = "domain-name-servers"
@@ -590,7 +588,7 @@ def get_params():
                         action='store_const',
                         const=True,
                         help="Start Kea server as authoritative for all"
-                        " networks (Default: false)")
+                        " networks (Global, Default: false)")
     parser.add_argument("-l", "--logfile",
                         required=False,
                         metavar="<logfile-name>",
@@ -609,16 +607,17 @@ def get_params():
                         action='append',
                         type=validate_interface,
                         help="Name of the interface on which to listen"
-                        " (e.g.: eth0 or better eth0/<ipv4>). This argument"
-                        " can be used multiple of times.")
+                        " (Global, Default: '*'; e.g.: 'eth0' or better yet:"
+                        " 'eth0/<ipv4>'). This argument can be used multiple"
+                        " of times.")
     parser.add_argument("-n", "--domain-name-server",
                         dest="domain_name_servers",
                         required=False,
                         metavar="<nameserver-ipv4>",
                         action='append',
                         type=validate_ipv4,
-                        help="Domain name server IPv4 address (global)"
-                        " (Default: None). This argument can be used multiple"
+                        help="Domain name server IPv4 address (Global,"
+                        " Default: None). This argument can be used multiple"
                         " of times. These nameservers take precedence over"
                         " others found in option-data (if used).")
     parser.add_argument("-r", "--router",
@@ -627,17 +626,16 @@ def get_params():
                         metavar="<router-ipv4>",
                         action='append',
                         type=validate_ipv4,
-                        help="Router's IPv4 address (global)"
-                        " (Default: None). This argument can be used multiple"
-                        " of times.")
+                        help="Router's IPv4 address (Global, Default: None)."
+                        " This argument can be used multiple of times.")
     parser.add_argument("-o", "--option-data",
                         required=False,
                         metavar="<option-data-json>",
                         action='append',
                         type=validate_option_data,
                         help="JSON value representing option-data object"
-                        " (Default: None). This argument can be used multiple"
-                        " of times.")
+                        " (Global, Default: None). This argument can be used"
+                        " multiple of times.")
     parser.add_argument("-s", "--subnet4",
                         required=False,
                         metavar="<subnet4-json>",
@@ -671,7 +669,7 @@ def get_params():
                         type=validate_subnet_id,
                         help="Starting ID number for subnets (all configured"
                         " subnets are incremented by one from this value -"
-                        " when the highest id is used the it will reset from"
+                        " when the highest id is reached then it will reset"
                         " and start from one again)."
                         " (Default: None/Auto, Min-Max: 1-%d)"
                         % SUBNET_ID_MAX)
