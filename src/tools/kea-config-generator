@@ -22,6 +22,7 @@ import os
 import argparse
 import re
 import json
+import base64
 import psutil
 import ipaddress
 import textwrap
@@ -506,11 +507,20 @@ def get_params():
         @functools.wraps(fu)
 
         def wrap_validate_json(json_str, *args, **kwargs):
+            # first we try to decode base64
             try:
-                json_object = json.loads(json_str)
-            except json.JSONDecodeError:
-                raise argparse.ArgumentTypeError(
-                    "'%s' is not a valid JSON!" % json_str)
+                json_base64 = base64.b64decode(json_str, validate = True)
+                json_object = json.loads(json_base64)
+                json_str = json_base64
+            except:
+                # now we try plain json
+                try:
+                    json_object = json.loads(json_str)
+                except json.JSONDecodeError:
+                    raise argparse.ArgumentTypeError(
+                        "'%s' is not a valid JSON (or base64 encoded JSON)!"
+                        % json_str)
+
             return fu(json_str, json_object, *args, **kwargs)
 
         return wrap_validate_json
@@ -599,7 +609,8 @@ def get_params():
                         metavar="<lease-database-json>",
                         type=validate_lease_database,
                         help="JSON value representing lease database object"
-                        " (Default: type=memfile)")
+                        " (Default: type=memfile). The whole JSON can be"
+                        " encoded in base64.")
     parser.add_argument("-i", "--interface",
                         dest="interfaces",
                         required=False,
@@ -635,7 +646,8 @@ def get_params():
                         type=validate_option_data,
                         help="JSON value representing option-data object"
                         " (Global, Default: None). This argument can be used"
-                        " multiple of times.")
+                        " multiple of times. The whole JSON can be encoded in"
+                        " base64.")
     parser.add_argument("-s", "--subnet4",
                         required=False,
                         metavar="<subnet4-json>",
@@ -643,7 +655,8 @@ def get_params():
                         type=validate_subnet4,
                         help="JSON value representing subnet4 object"
                         " (Default: Auto-Generated). This argument can be"
-                        " used multiple of times.")
+                        " used multiple of times. The whole JSON can be"
+                        " encoded in base64.")
     parser.add_argument("-x", "--hook",
                         dest="hooks_libraries",
                         required=False,
@@ -652,7 +665,7 @@ def get_params():
                         type=validate_hook,
                         help="JSON value representing hook object"
                         " (Default: None). This argument can be used multiple"
-                        " of times.")
+                        " of times. The whole JSON can be encoded in base64.")
     parser.add_argument("-L", "--logger",
                         dest="loggers",
                         required=False,
@@ -662,7 +675,8 @@ def get_params():
                         help="JSON value representing logger object"
                         " (Default: file='%s'). This argument can be used"
                         " multiple of times. If used then --logfile is"
-                        " ignored." % DEFAULT_LOGFILE)
+                        " ignored. The whole JSON can be encoded in base64."
+                        % DEFAULT_LOGFILE)
     parser.add_argument("-I", "--subnet-id",
                         required=False,
                         metavar="<id-number>",
