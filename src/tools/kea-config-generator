@@ -18,7 +18,6 @@
 
 
 import sys
-import os
 import argparse
 import re
 import json
@@ -33,10 +32,10 @@ import functools
 JSON_INDENT = 4
 DEFAULT_LOGFILE = "/var/log/kea-dhcp4.log"
 DEFAULT_LEASE_TIME = 3600
-SUBNET_ID_MAX = 4294967294 # greater than zero and less than 4294967295
+SUBNET_ID_MAX = 4294967294  # greater than zero and less than 4294967295
 
 
-def msg(*args, columns = 80):
+def msg(*args, columns=80):
     """ Prints a message on stderr.
 
     It is a wrapper for print() function, it adds an error category to the
@@ -76,8 +75,8 @@ def msg(*args, columns = 80):
 
     indent = ' ' * (len(msg_type) + 1)
     text = ' '.join(text)
-    text = textwrap.fill(text, width = columns, subsequent_indent = indent)
-    print(text, file = sys.stderr)
+    text = textwrap.fill(text, width=columns, subsequent_indent=indent)
+    print(text, file=sys.stderr)
 
 
 def get_networks():
@@ -150,16 +149,16 @@ def gen_subnets(params):
         return interface_map
 
     subnets = []
-    subnet_list = [] # to simply lookup if subnet is already created
+    subnet_list = []    # to simply lookup if subnet is already created
     interfaces_map = get_interface_map(params.get("interfaces", []))
 
     for netinf in params.get("my-network", []):
         if interfaces_map:
-        # if explicit interfaces used then skip the others...
+            # if explicit interfaces used then skip the others...
             if netinf["iface"] not in interfaces_map:
                 continue
         elif netinf["iface"] == "lo":
-        # if no explicit interfaces then skip loopback at least
+            # if no explicit interfaces then skip loopback at least
             continue
 
         subnet = {}
@@ -184,7 +183,7 @@ def gen_subnets(params):
             pool_end = subnet_range[-2]     # no broadcast already
 
             if pool_start <= pool_end:
-                pool = { "pool": str(pool_start) + '-' + str(pool_end) }
+                pool = {"pool": str(pool_start) + '-' + str(pool_end)}
                 pools.append(pool)
             else:
                 msg('WARNING', "This subnet '%s' has no valid pool..."
@@ -201,7 +200,8 @@ def gen_subnets(params):
 
 
 def return_globaloptions(params):
-    def fix_nameservers(options = [], nameservers = []):
+
+    def fix_nameservers(options=[], nameservers=[]):
         """ Returns options with unified nameserver option-data.
 
         It leaves all option-data items intact except 'domain-name-servers'.
@@ -214,7 +214,9 @@ def return_globaloptions(params):
         filtered_options = []
         for option in options:
             if option.get("name") == "domain-name-servers":
-                option_nameservers = re.sub(r'\s+', '', option["data"]).split(",")
+                option_nameservers = re.sub(r'\s+',
+                                            '',
+                                            option["data"]).split(",")
                 for nameserver in option_nameservers:
                     if nameserver not in nameservers:
                         nameservers.append(nameserver)
@@ -231,8 +233,7 @@ def return_globaloptions(params):
 
         return options
 
-
-    def fix_routers(options = [], routers = []):
+    def fix_routers(options=[], routers=[]):
         """ Returns options with global routers option-data (if used). """
 
         option = {}
@@ -242,7 +243,6 @@ def return_globaloptions(params):
         options.append(option)
 
         return options
-
 
     # explicitly configured option-data or empty list
     options = params.get("option-data", [])
@@ -283,7 +283,7 @@ def return_subnets(params):
     ]
     """
 
-    def fix_subnets(subnets = [], subnet_id = None):
+    def fix_subnets(subnets=[], subnet_id=None):
         """ Returns sorted subnets so subnet IDs can grow consistently. """
 
         # list all subnets and sort them
@@ -323,7 +323,7 @@ def return_subnets(params):
                 if reservations_map.get(new_subnet):
                     reservations_map[new_subnet].append(addr["addr"])
                 else:
-                    reservations_map[new_subnet] = [ addr["addr"] ]
+                    reservations_map[new_subnet] = [addr["addr"]]
 
         return reservations_map
 
@@ -496,13 +496,12 @@ def get_params():
 
     def validate_ipv4(arg_str):
         try:
-            ip = ipaddress.IPv4Address(arg_str)
+            ipaddress.IPv4Address(arg_str)
         except ValueError:
             raise argparse.ArgumentTypeError(
                 "'%s' is not a valid IPv4 address!" % arg_str)
 
         return arg_str
-
 
     def validate_interface(arg_str):
         # <iface>/<ip>
@@ -525,13 +524,12 @@ def get_params():
                 "'%s' has empty interface name!" % arg_str)
 
         try:
-            ip = ipaddress.IPv4Address(iface[1])
+            ipaddress.IPv4Address(iface[1])
         except ValueError:
             raise argparse.ArgumentTypeError(
                 "'%s' is not a valid IPv4 address!" % iface[1])
 
         return arg_str
-
 
     def validate_subnet_id(arg_str):
         try:
@@ -546,18 +544,15 @@ def get_params():
 
         return subnet_id
 
-
-
     def validate_json_decorator(fu):
         @functools.wraps(fu)
-
         def wrap_validate_json(json_str, *args, **kwargs):
             # first we try to decode base64
             try:
-                json_base64 = base64.b64decode(json_str, validate = True)
+                json_base64 = base64.b64decode(json_str, validate=True)
                 json_object = json.loads(json_base64)
                 json_str = json_base64
-            except:
+            except Exception:
                 # now we try plain json
                 try:
                     json_object = json.loads(json_str)
@@ -570,14 +565,12 @@ def get_params():
 
         return wrap_validate_json
 
-
     @validate_json_decorator
-    def validate_json(arg_str, json_object = None):
+    def validate_json(arg_str, json_object=None):
         return json_object
 
-
     @validate_json_decorator
-    def validate_lease_database(arg_str, database = None):
+    def validate_lease_database(arg_str, database=None):
         if not isinstance(database.get("type"), str):
             raise argparse.ArgumentTypeError(
                 "Lease database object has to have at least the 'type' field"
@@ -585,9 +578,8 @@ def get_params():
 
         return database
 
-
     @validate_json_decorator
-    def validate_option_data(arg_str, option_data = None):
+    def validate_option_data(arg_str, option_data=None):
         if (not (((isinstance(option_data.get("name"), str)
             and len(option_data["name"]))
             or isinstance(option_data.get("code"), int))
@@ -599,9 +591,8 @@ def get_params():
 
         return option_data
 
-
     @validate_json_decorator
-    def validate_subnet4(arg_str, subnet = None):
+    def validate_subnet4(arg_str, subnet=None):
         if (not ((isinstance(subnet.get("subnet"), str)
             and len(subnet["subnet"]))
             and (isinstance(subnet.get("pools"), list)
@@ -613,9 +604,8 @@ def get_params():
 
         return subnet
 
-
     @validate_json_decorator
-    def validate_hook(arg_str, hook = None):
+    def validate_hook(arg_str, hook=None):
         if (not (isinstance(hook.get("library"), str)
             and len(hook["library"]))):
             # ugly python syntax
@@ -624,7 +614,6 @@ def get_params():
                 " with a filename!")
 
         return hook
-
 
     # parse CLI arguments
     parser = argparse.ArgumentParser(
@@ -763,4 +752,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
