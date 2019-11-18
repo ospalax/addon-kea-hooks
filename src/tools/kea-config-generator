@@ -149,10 +149,8 @@ def gen_subnets(params):
 
         return interface_map
 
-
     subnets = []
     subnet_list = [] # to simply lookup if subnet is already created
-    reservations_map = {} # here we gather all addresses and map them to subnet
     interfaces_map = get_interface_map(params.get("interfaces", []))
 
     for netinf in params.get("my-network", []):
@@ -174,12 +172,6 @@ def gen_subnets(params):
                     continue
 
             new_subnet = addr["network"] + '/' + str(addr["prefix"])
-
-            # add reservation
-            if reservations_map.get(new_subnet):
-                reservations_map[new_subnet].append(addr["addr"])
-            else:
-                reservations_map[new_subnet] = [ addr["addr"] ]
 
             # skip this if relevant subnet was already configured
             if new_subnet in subnet_list:
@@ -204,20 +196,6 @@ def gen_subnets(params):
             subnet["subnet"] = new_subnet
             subnet["pools"] = pools
             subnets.append(subnet)
-
-    # add reservations
-    for subnet in subnets:
-        addrs = reservations_map.get(subnet["subnet"], [])
-        reservations = []
-        for addr in addrs:
-            reservation = {
-                "flex-id": "'DO-NOT-LEASE-%s'" % addr,
-                "ip-address": addr
-            }
-            reservations.append(reservation)
-
-        subnet["reservations"] = reservations
-        subnet["reservation-mode"] = "all"
 
     return subnets
 
@@ -332,6 +310,44 @@ def return_subnets(params):
 
         return sorted_subnets
 
+    def get_reservation_map(netinfs):
+        """ Returns a map of reservations. """
+
+        reservations_map = {}
+
+        for netinf in netinfs:
+            for addr in netinf["addrs"]:
+                new_subnet = addr["network"] + '/' + str(addr["prefix"])
+
+                # add reservation
+                if reservations_map.get(new_subnet):
+                    reservations_map[new_subnet].append(addr["addr"])
+                else:
+                    reservations_map[new_subnet] = [ addr["addr"] ]
+
+        return reservations_map
+
+    def fix_reservations(subnets, netinfs):
+        """ Returns subnets with added reservations. """
+
+        # we gather all addresses and map them to subnets
+        reservations_map = get_reservation_map(netinfs)
+
+        # and we add flex-id reservations
+        for subnet in subnets:
+            addrs = reservations_map.get(subnet["subnet"], [])
+            reservations = subnet.get("reservations", [])
+            for addr in addrs:
+                reservation = {
+                    "flex-id": "'DO-NOT-LEASE-%s'" % addr,
+                    "ip-address": addr
+                }
+                reservations.append(reservation)
+
+            subnet["reservations"] = reservations
+            subnet["reservation-mode"] = "all"
+
+        return subnets
 
     # explicitly configured subnets or generated
     subnets = params.get("subnet4", [])
@@ -340,6 +356,9 @@ def return_subnets(params):
 
     # sort subnets
     subnets = fix_subnets(subnets, params.get("subnet-id"))
+
+    # Here follows a hack to forbid Kea to lease its own addresses...
+    subnets = fix_reservations(subnets, params.get("my-network", []))
 
     return subnets
 
