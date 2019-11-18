@@ -176,7 +176,7 @@ def gen_subnets(params):
             new_subnet = addr["network"] + '/' + str(addr["prefix"])
 
             # add reservation
-            if reservations_map.get("new_subnet"):
+            if reservations_map.get(new_subnet):
                 reservations_map[new_subnet].append(addr["addr"])
             else:
                 reservations_map[new_subnet] = [ addr["addr"] ]
