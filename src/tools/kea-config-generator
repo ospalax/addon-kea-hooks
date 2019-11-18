@@ -125,7 +125,7 @@ def get_networks():
     return all_netinfs
 
 
-def gen_subnets(netinfs):
+def gen_subnets(params):
     """ Returns subnets with a pool and with host reservations.
 
         - Subnet is deducted from network address and prefix.
@@ -137,47 +137,73 @@ def gen_subnets(netinfs):
         - Reservations are made to prevent Kea leasing its own addresses...
     """
 
+    def get_interface_map(interfaces):
+        """ Returns a map of interfaces. """
+
+        interface_map = {}
+        for iface in interfaces:
+            iface = iface.split("/")
+            interface_map[iface[0]] = []
+            if len(iface) > 1:
+                interface_map[iface[0]].append(iface[1])
+
+        return interface_map
+
+
     subnets = []
     subnet_list = [] # to simply lookup if subnet is already created
     reservations_map = {} # here we gather all addresses and map them to subnet
+    interfaces_map = get_interface_map(params.get("interfaces", []))
 
-    for netinf in netinfs:
+    for netinf in params.get("my-network", []):
+        if interfaces_map:
+        # if explicit interfaces used then skip the others...
+            if netinf["iface"] not in interfaces_map:
+                continue
+        elif netinf["iface"] == "lo":
+        # if no explicit interfaces then skip loopback at least
+            continue
+
         subnet = {}
         pools = []
-        if netinf["iface"] != "lo":
-            for addr in netinf["addrs"]:
-                new_subnet = addr["network"] + '/' + str(addr["prefix"])
 
-                # add reservation
-                if reservations_map.get("new_subnet"):
-                    reservations_map[new_subnet].append(addr["addr"])
-                else:
-                    reservations_map[new_subnet] = [ addr["addr"] ]
-
-                # skip this if relevant subnet was already configured
-                if new_subnet in subnet_list:
+        for addr in netinf["addrs"]:
+            # if explicit interfaces used then verify used address...
+            if interfaces_map and interfaces_map[netinf["iface"]]:
+                if addr["addr"] not in interfaces_map[netinf["iface"]]:
                     continue
 
-                # create list of all _hosts_ ips
-                subnet_range = list(ipaddress.ip_network(new_subnet).hosts())
+            new_subnet = addr["network"] + '/' + str(addr["prefix"])
 
-                pool_start = subnet_range[0] + 1    # exempt the lowest ip
-                pool_end = subnet_range[-1]         # no broadcast already
+            # add reservation
+            if reservations_map.get("new_subnet"):
+                reservations_map[new_subnet].append(addr["addr"])
+            else:
+                reservations_map[new_subnet] = [ addr["addr"] ]
 
-                if pool_start <= pool_end:
-                    pool = { "pool": str(pool_start) + '-' + str(pool_end) }
-                    pools.append(pool)
-                else:
-                    msg('WARNING', "This subnet '%s' has no valid pool..."
-                        "SKIPPED" % new_subnet)
-                    continue
+            # skip this if relevant subnet was already configured
+            if new_subnet in subnet_list:
+                continue
 
-                # everything should be ok
-                subnet_list.append(new_subnet)
-                subnet["subnet"] = new_subnet
-                subnet["pools"] = pools
-                subnet["interface"] = netinf["iface"]
-                subnets.append(subnet)
+            # create list of all ips
+            subnet_range = ipaddress.ip_network(new_subnet)
+
+            pool_start = subnet_range[2]    # exempt the lowest ip
+            pool_end = subnet_range[-2]     # no broadcast already
+
+            if pool_start <= pool_end:
+                pool = { "pool": str(pool_start) + '-' + str(pool_end) }
+                pools.append(pool)
+            else:
+                msg('WARNING', "This subnet '%s' has no valid pool..."
+                    "SKIPPED" % new_subnet)
+                continue
+
+            # everything should be ok
+            subnet_list.append(new_subnet)
+            subnet["subnet"] = new_subnet
+            subnet["pools"] = pools
+            subnets.append(subnet)
 
     # add reservations
     for subnet in subnets:
@@ -310,7 +336,7 @@ def return_subnets(params):
     # explicitly configured subnets or generated
     subnets = params.get("subnet4", [])
     if not len(subnets):
-        subnets = gen_subnets(params.get("my-network", []))
+        subnets = gen_subnets(params)
 
     # sort subnets
     subnets = fix_subnets(subnets, params.get("subnet-id"))
