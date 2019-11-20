@@ -125,7 +125,7 @@ def get_networks():
 
 
 def gen_subnets(params):
-    """ Returns subnets with a pool and with host reservations.
+    """ Returns subnets with a pool.
 
         - Subnet is deducted from network address and prefix.
         - Pool is created as the whole subnet range minus:
@@ -133,7 +133,6 @@ def gen_subnets(params):
             2. one above network address - the lowest address
             3. broadcast address/highest address
             Broadcast address and the highest address are mostly the same.
-        - Reservations are made to prevent Kea leasing its own addresses...
     """
 
     def get_interface_map(interfaces):
@@ -141,6 +140,9 @@ def gen_subnets(params):
 
         interface_map = {}
         for iface in interfaces:
+            if iface == '*':
+                continue
+
             iface = iface.split("/")
             interface_map[iface[0]] = []
             if len(iface) > 1:
