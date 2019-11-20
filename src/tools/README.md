@@ -28,44 +28,48 @@ optional arguments:
   -t <lease-time-seconds>, --lease-time <lease-time-seconds>
                         Life time of a lease in seconds (Default: 3600)
   -a, --authoritative   Start Kea server as authoritative for all networks
-                        (Default: false)
+                        (Global, Default: false)
   -l <logfile-name>, --logfile <logfile-name>
                         Name of the file for log messages (Default:
                         /var/log/kea-dhcp4.log)
   -d <lease-database-json>, --lease-database <lease-database-json>
                         JSON value representing lease database object
-                        (Default: type=memfile)
+                        (Default: type=memfile). The whole JSON can be encoded
+                        in base64.
   -i <iface[/<ipv4>]>, --interface <iface[/<ipv4>]>
-                        Name of the interface on which to listen (e.g.: eth0
-                        or better eth0/<ipv4>). This argument can be used
-                        multiple of times.
+                        Name of the interface on which to listen (Global,
+                        Default: '*'; e.g.: 'eth0' or better yet:
+                        'eth0/<ipv4>'). This argument can be used multiple of
+                        times.
   -n <nameserver-ipv4>, --domain-name-server <nameserver-ipv4>
-                        Domain name server IPv4 address (global) (Default:
+                        Domain name server IPv4 address (Global, Default:
                         None). This argument can be used multiple of times.
                         These nameservers take precedence over others found in
                         option-data (if used).
   -r <router-ipv4>, --router <router-ipv4>
-                        Router's IPv4 address (global) (Default: None). This
+                        Router's IPv4 address (Global, Default: None). This
                         argument can be used multiple of times.
   -o <option-data-json>, --option-data <option-data-json>
-                        JSON value representing option-data object (Default:
-                        None). This argument can be used multiple of times.
+                        JSON value representing option-data object (Global,
+                        Default: None). This argument can be used multiple of
+                        times. The whole JSON can be encoded in base64.
   -s <subnet4-json>, --subnet4 <subnet4-json>
                         JSON value representing subnet4 object (Default: Auto-
                         Generated). This argument can be used multiple of
-                        times.
+                        times. The whole JSON can be encoded in base64.
   -x <hook-json>, --hook <hook-json>
                         JSON value representing hook object (Default: None).
-                        This argument can be used multiple of times.
+                        This argument can be used multiple of times. The whole
+                        JSON can be encoded in base64.
   -L <logger-json>, --logger <logger-json>
                         JSON value representing logger object (Default:
                         file='/var/log/kea-dhcp4.log'). This argument can be
                         used multiple of times. If used then --logfile is
-                        ignored.
+                        ignored. The whole JSON can be encoded in base64.
   -I <id-number>, --subnet-id <id-number>
                         Starting ID number for subnets (all configured subnets
                         are incremented by one from this value - when the
-                        highest id is used the it will reset from and start
+                        highest id is reached then it will reset and start
                         from one again). (Default: None/Auto, Min-Max:
                         1-4294967294)
 ```

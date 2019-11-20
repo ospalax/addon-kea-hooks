@@ -591,6 +591,20 @@ def get_params():
                 "Option-data object has to have 'name' or 'code' field and"
                 " 'data'!")
 
+        if (option_data.get("name") == "domain-name-servers" or
+            option_data.get("code") == 6):
+            # ugly python syntax
+            ips = [ip.strip() for ip in option_data["data"].split(",")]
+            for ip in ips:
+                validate_ipv4(ip)
+
+        if (option_data.get("name") == "routers" or
+            option_data.get("code") == 3):
+            # ugly python syntax
+            ips = [ip.strip() for ip in option_data["data"].split(",")]
+            for ip in ips:
+                validate_ipv4(ip)
+
         return option_data
 
     @validate_json_decorator
@@ -602,7 +616,35 @@ def get_params():
             # ugly python syntax
             raise argparse.ArgumentTypeError(
                 "Subnet4 object has to have at least 'subnet' and 'pools'"
-                " (list) field!")
+                " (non-empty list) fields!")
+
+        try:
+            ipaddress.ip_network(subnet["subnet"])
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                "Subnet '%s' is not a valid network designation."
+                % subnet["subnet"])
+
+        for pool in subnet["pools"]:
+            ips = [pool.strip() for pool in pool.split("-")]
+            if len(ips) != 2:
+                raise argparse.ArgumentTypeError(
+                    "Pool '%s' is not in '<start IP> - <end IP>' format!"
+                    % pool)
+
+            validate_ipv4(ips[0])
+            validate_ipv4(ips[1])
+
+            start_ip = ipaddress.IPv4Address(ips[0])
+            end_ip = ipaddress.IPv4Address(ips[1])
+
+            if start_ip > end_ip:
+                raise argparse.ArgumentTypeError(
+                    "Start IP in the pool is greater than the end IP!")
+
+        option_data = subnet.get("option-data", [])
+        for option in option_data:
+            validate_option_data(json.dumps(option))
 
         return subnet
 
