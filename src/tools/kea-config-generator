@@ -626,6 +626,14 @@ def get_params():
                 % subnet["subnet"])
 
         for pool in subnet["pools"]:
+            if (not (isinstance(pool, dict) and
+                isinstance(pool.get("pool"), str))):
+                # ugly python syntax
+                raise argparse.ArgumentTypeError(
+                    "Pools must contain a list of dicts with a value 'pool'!")
+
+            pool = pool["pool"]
+
             ips = [pool.strip() for pool in pool.split("-")]
             if len(ips) != 2:
                 raise argparse.ArgumentTypeError(
