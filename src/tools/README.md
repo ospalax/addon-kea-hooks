@@ -4,7 +4,7 @@
 
 This script helps to generate Kea's config file (e.g.: `kea-dhcp4.conf`) from scratch. It either create configuration based on arguments or completely auto-generates one based on the machine's network interfaces and addresses.
 
-**Motivation: ease the work for OpenNebula's NFV appliance service script**
+**Motivation: ease the work for OpenNebula's VNF appliance service script**
 
 ### Usage
 
