@@ -6,3 +6,5 @@ Here are already built artifacts of ISC Kea. I decided to include them in the re
 
 - `onekea-1.6.0-alpine3.10.tar.xz`
 - `onekea-1.6.0-alpine3.10.tar.xz.sha256sum`
+- `onekea-1.6.1-alpine3.11.tar.xz`
+- `onekea-1.6.1-alpine3.11.tar.xz.sha256sum`
