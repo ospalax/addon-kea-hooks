@@ -38,6 +38,9 @@ install_kea_runtime_deps()
         xz \
         ;
 
+    # try to install stable version first, then try from edge or fail
+    apk add --no-cache log4cplus \
+    || \
     apk add --no-cache \
         --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
         log4cplus
@@ -67,6 +70,9 @@ install_kea_build_deps()
         python3-dev \
         ;
 
+    # try to install stable version first, then try from edge or fail
+    apk add --no-cache log4cplus-dev \
+    || \
     apk add --no-cache \
         --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
         log4cplus-dev
