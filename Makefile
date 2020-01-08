@@ -13,29 +13,31 @@ include Makefile.config
 
 all: docker image package
 
-image: $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar
-package: $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz
+image: $(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION)-alpine$(ALPINE_VERSION).tar
+package: $(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION)-alpine$(ALPINE_VERSION).tar.xz
 
-$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION).tar.xz: docker
+$(BUILD_DIR)/$(IKEA_PKG)-$(KEA_VERSION)-alpine$(ALPINE_VERSION).tar.xz: docker
 	@echo "IKEA: CREATE PACKAGE..."
 	docker run --rm -it --entrypoint /bin/sh \
 		-e "KEA_INSTALLPREFIX=$(KEA_INSTALLPREFIX)" \
 		-e "IKEA_PKG=$(IKEA_PKG)" \
 		-e "KEA_VERSION=$(KEA_VERSION)" \
+		-e "ALPINE_VERSION=$(ALPINE_VERSION)" \
 		-e "UID_GID=$$(getent passwd $$(id -u) | cut -d":" -f3,4)" \
 		-v "$$(realpath '$(BUILD_DIR)'):/build/:rw" \
 		-v "$$(realpath ./tools/arkea.sh):/arkea.sh:ro" \
 		--user root \
-		$(IKEA_TAG):$(KEA_VERSION) \
+		"$(IKEA_TAG):$(KEA_VERSION)-alpine$(ALPINE_VERSION)" \
 		/arkea.sh
 	cd "$(BUILD_DIR)" && \
-		sha256sum "$(IKEA_PKG)-$(KEA_VERSION).tar.xz" \
-			> "$(IKEA_PKG)-$(KEA_VERSION).tar.xz.sha256sum"
+		sha256sum "$(IKEA_PKG)-$(KEA_VERSION)-alpine$(ALPINE_VERSION).tar.xz" \
+			> "$(IKEA_PKG)-$(KEA_VERSION)-alpine$(ALPINE_VERSION).tar.xz.sha256sum"
 
-$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar: docker
+$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION)-alpine$(ALPINE_VERSION).tar: docker
 	@echo "IKEA: SAVE DOCKER IMAGE INTO TAR..."
-	docker save -o "$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION).tar" \
-		$(IKEA_TAG):$(KEA_VERSION)
+	docker save -o \
+		"$(BUILD_DIR)/$(IKEA_IMG)-$(KEA_VERSION)-alpine$(ALPINE_VERSION).tar" \
+		"$(IKEA_TAG):$(KEA_VERSION)-alpine$(ALPINE_VERSION)"
 
 docker: Dockerfile ikea.sh
 	@echo "IKEA: START DOCKER BUILD..."

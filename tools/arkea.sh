@@ -12,18 +12,21 @@ set -ex
 
 KEA_INSTALLPREFIX="${KEA_INSTALLPREFIX:-/usr/local}"
 
-if [ -z "$IKEA_PKG" ] ; then
-    echo "ERROR: Variable 'IKEA_PKG' is unset" 1>&2
-    exit 1
-fi
-
-if [ -z "$KEA_VERSION" ] ; then
-    echo "ERROR: Variable 'KEA_VERSION' is unset" 1>&2
-    exit 1
-fi
+for i in \
+    IKEA_PKG \
+    KEA_VERSION \
+    ALPINE_VERSION \
+    ;
+do
+    _value=$(eval echo "\"\$${i}\"")
+    if [ -z "$_value" ] ; then
+        echo "ERROR: Variable '${i}' is unset" 1>&2
+        exit 1
+    fi
+done
 
 # here is expected that /build directory is provided as a bind mount for docker
-tar cJf "/build/${IKEA_PKG}-${KEA_VERSION}.tar.xz" \
+tar cJf "/build/${IKEA_PKG}-${KEA_VERSION}-alpine${ALPINE_VERSION}.tar.xz" \
 	"${KEA_INSTALLPREFIX}/etc" \
 	"${KEA_INSTALLPREFIX}/include" \
 	"${KEA_INSTALLPREFIX}/lib" \
@@ -32,7 +35,8 @@ tar cJf "/build/${IKEA_PKG}-${KEA_VERSION}.tar.xz" \
 	"${KEA_INSTALLPREFIX}/var" \
 	/etc/ld-musl-$(arch).path
 
-chown "${UID_GID:-$(id -u).}" "/build/${IKEA_PKG}-${KEA_VERSION}.tar.xz"
+chown "${UID_GID:-$(id -u).}" \
+    "/build/${IKEA_PKG}-${KEA_VERSION}-alpine${ALPINE_VERSION}.tar.xz"
 
 exit 0
 

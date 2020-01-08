@@ -80,7 +80,7 @@ done
 start_log "${BUILD_DIR}/${IKEA_TAG}-${KEA_VERSION}-build.log"
 
 # finally running the docker build...
-docker build -t ${IKEA_TAG}:${KEA_VERSION} \
+docker build -t ${IKEA_TAG} \
     --build-arg ALPINE_VERSION \
     --build-arg KEA_VERSION \
     --build-arg KEA_INSTALLPREFIX \
@@ -89,6 +89,10 @@ docker build -t ${IKEA_TAG}:${KEA_VERSION} \
     --build-arg KEEP_BUILDDEPS \
     --build-arg INSTALL_HOOKS \
     .
+
+# let's create all relevant tags
+docker tag ${IKEA_TAG} ${IKEA_TAG}:${KEA_VERSION}
+docker tag ${IKEA_TAG} ${IKEA_TAG}:${KEA_VERSION}-alpine${ALPINE_VERSION}
 
 # stop logging and return stdout to what was before
 end_log

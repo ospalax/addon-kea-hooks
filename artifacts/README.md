@@ -4,5 +4,5 @@ Here are already built artifacts of ISC Kea. I decided to include them in the re
 
 ## OpenNebula's VNF appliance
 
-- `onekea-1.6.0.tar.xz`: for OpenNebula's VNF appliance (`alpine-3.10`)
-- `onekea-1.6.0.tar.xz.sha256sum`: sha256 checksum
+- `onekea-1.6.0-alpine3.10.tar.xz`
+- `onekea-1.6.0-alpine3.10.tar.xz.sha256sum`
