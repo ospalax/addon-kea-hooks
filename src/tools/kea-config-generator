@@ -192,6 +192,11 @@ def gen_subnets(params):
                     "SKIPPED" % new_subnet)
                 continue
 
+            # add the interface to be on the safe side - this is undocumented
+            # and I have found only one reference in official documentation:
+            # https://kea.readthedocs.io/en/v1_6_0/arm/dhcp4-srv.html#host-reservation-in-dhcpv4
+            subnet["interface"] = netinf["iface"]
+
             # everything should be ok
             subnet_list.append(new_subnet)
             subnet["subnet"] = new_subnet
@@ -273,6 +278,7 @@ def return_subnets(params):
     [
         {
             "id": <subnet-id>,
+            "interface": "eth1",
             "subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ],
             "reservations": [
