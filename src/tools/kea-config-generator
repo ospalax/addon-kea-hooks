@@ -16,6 +16,26 @@
 # limitations under the License.                                              #
 # --------------------------------------------------------------------------- #
 
+__all__ = [
+    "__title__",
+    "__summary__",
+    "__uri__",
+    "__version__",
+    "__author__",
+    "__email__",
+    "__license__",
+    "__copyright__",
+]
+
+__title__ = "kea-config-generator"
+__summary__ = "ISC Kea configuration generator"
+__uri__ = "https://github.com/ospalax/ikea"
+__version__ = "1.0.0"
+__author__ = "Petr Ospalý"
+__email__ = "pospaly@opennebula.systems"
+__license__ = "Apache License, Version 2.0"
+__copyright__ = "2019-2020 %s" % __author__
+
 
 import sys
 import argparse
@@ -28,12 +48,19 @@ import textwrap
 import functools
 
 
+#
 # global defaults
+#
+
 JSON_INDENT = 4
 DEFAULT_LOGFILE = "/var/log/kea-dhcp4.log"
 DEFAULT_LEASE_TIME = 3600
 SUBNET_ID_MAX = 4294967294  # greater than zero and less than 4294967295
 
+
+#
+# functions
+#
 
 def msg(*args, columns=80):
     """ Prints a message on stderr.
@@ -678,6 +705,9 @@ def get_params():
         description="ISC Kea dhcp4 config generator - it generates dhcp4"
         " config file and its content can be modified by varies options."
         " The result is then simply printed into stdout.")
+
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s ' + __version__)
 
     parser.add_argument("-t", "--lease-time",
                         required=False,

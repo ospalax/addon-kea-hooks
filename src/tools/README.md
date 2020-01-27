@@ -2,6 +2,8 @@
 
 ## kea-config-generator
 
+### Version: `1.0`
+
 This script helps to generate Kea's config file (e.g.: `kea-dhcp4.conf`) from scratch. It either create configuration based on arguments or completely auto-generates one based on the machine's network interfaces and addresses.
 
 **Motivation: ease the work for OpenNebula's VNF appliance service script**
@@ -25,6 +27,7 @@ into stdout.
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --version         show program's version number and exit
   -t <lease-time-seconds>, --lease-time <lease-time-seconds>
                         Life time of a lease in seconds (Default: 3600)
   -a, --authoritative   Start Kea server as authoritative for all networks

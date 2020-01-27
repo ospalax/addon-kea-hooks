@@ -15,6 +15,7 @@ ikea/
 ├── artifacts/          # Ready to use builds
 ├── Dockerfile
 ├── extra/              # Some handy scripts
+├── CHANGELOG.md
 ├── ikea.sh
 ├── LICENSE
 ├── Makefile
