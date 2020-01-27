@@ -2,7 +2,7 @@
 
 ## kea-config-generator
 
-### Version: `1.0`
+### Version: `1.0.0`
 
 This script helps to generate Kea's config file (e.g.: `kea-dhcp4.conf`) from scratch. It either create configuration based on arguments or completely auto-generates one based on the machine's network interfaces and addresses.
 
