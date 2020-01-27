@@ -8,7 +8,7 @@ Documentation for Kea and hooks:
 
 ## Kea ONElease4 Hook
 
-### Version: `1.0`
+### Version: `1.0.0`
 
 This is quite a simple hook to assign ONE lease for a client based on its HW (MAC) address. It will work properly only if clients have HW addresses generated in a particular way: **the last four bytes represent an IPv4 address**
 
