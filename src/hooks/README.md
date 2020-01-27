@@ -19,7 +19,7 @@ Beside the hook's source code directories there are symlinks named after the com
 `ikea` now will know which hooks and what version of them can be built with the ISC Kea version currently being built. If no directory or symlink is present with the correspondent Kea version then this particular hook will be skipped - it will not be built and it will not be packaged.
 
 ### `kea-onelease-dhcp4`
-#### Version: `1.0`
+#### Version: `1.0.0`
 
 This is quite a simple hook to assign ONE lease for a client based on its HW (MAC) address. It will work properly only if clients have HW addresses generated in a particular way: **the last four bytes represent an IPv4 address**
 
