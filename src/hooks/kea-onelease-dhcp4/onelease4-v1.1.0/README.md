@@ -8,7 +8,7 @@ Documentation for Kea and hooks:
 
 ## Kea ONElease4 Hook
 
-### Version: `1.0.0`
+### Version: `1.1.0`
 
 This is quite a simple hook to assign ONE lease for a client based on its HW (MAC) address. It will work properly only if clients have HW addresses generated in a particular way: **the last four bytes represent an IPv4 address**
 
@@ -65,7 +65,7 @@ To enable and use this hook - insert similar json under `hooks-libraries` in you
         "parameters": {
             "enabled": true,
             "byte-prefix": "00:02",
-            "subnet": "192.168.233.0/24",
+            "subnets": ["192.168.233.0/24", "10.1.0.0/16"],
             "logger-name": "onelease-dhcp4",
             "debug": true,
             "debug-logfile": "/var/log/onelease-dhcp4-debug.log"
@@ -75,7 +75,7 @@ To enable and use this hook - insert similar json under `hooks-libraries` in you
 ]
 ```
 
-All parameters are optional so you can just use:
+**All parameters are optional** - so you can just use:
 
 ```
 {
@@ -87,12 +87,12 @@ All parameters are optional so you can just use:
 
 - `enabled` (`boolean`) - enable/disable the function of this hook
 - `byte-prefix` (`string`) - hexadecimal representation of the first two bytes in HW address
-- `subnet` (`string`) - subnet in CIDR (hook applies only to these clients)
+- `subnets` (`list`) - list of subnets in CIDR (hook applies only to these clients)
 - `logger-name` (`string`) - identification in the debug log
 - `debug` (`boolean`) - enable/disable the debug log
 - `debug-logfile` (`string`) - filename for the debug log
 
-`byte-prefix` and `subnet` are basically conditionals - they must be both true or the normal lease procedure will take place. **If they are NOT defined then it is like they are always true.** They give us better control to select which packets this hook should handle and which packets should be processed normally.
+`byte-prefix` and `subnets` are basically conditionals - they must be both true **or** the **normal** lease procedure will take place. **If they are NOT defined then it is like they are always true.** They give us better control to select which packets this hook should handle and which packets should be processed normally.
 
 ### OpenNebula
 

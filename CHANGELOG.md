@@ -25,6 +25,12 @@ Hook libraries adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### ONElease4:
 
+More info in: `src/hooks/kea-onelease-dhcp4`
+
+#### `[v1.1.0]` - 2020.01
+
+- Added support for applying ONElease4 hook to specific subnets (more than one)
+
 #### `[v1.0.0]` - 2020.01
 
 - Initial seed code and functionality
