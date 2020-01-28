@@ -337,8 +337,12 @@ std::string print_onelease4_subnets(
 
     // concatenate all subnets
     std::string subnets_str = "";
-    for (size_t i = 0; i < subnets.size(); i++, subnets_str += ", ")
+    for (size_t i = 0; i < subnets.size(); i++) {
+        if (! subnets_str.empty())
+            subnets_str += ", ";
+
         subnets_str += subnets[i]->toText();
+    }
 
     return subnets_str;
 }
