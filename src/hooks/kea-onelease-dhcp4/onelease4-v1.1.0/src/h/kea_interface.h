@@ -13,6 +13,7 @@
 // do not put any code BEFORE these two lines
 
 
+#include <dhcpsrv/subnet.h>
 #include <asiolink/io_address.h>
 
 #include <fstream>
@@ -39,9 +40,9 @@ extern std::vector<uint8_t> kea_onelease4_byte_prefix;
 // Debug log (if enabled)
 extern std::fstream debug_logfile;
 
-// Optional ONE lease subnet - if ONE address is not within this subnet then
-// normal Kea lease will happen...
-extern std::string kea_onelease4_subnet;
+// Optional ONE lease subnet list - if ONE lease address is not within this
+// subnet list then normal Kea lease will happen...
+extern std::vector<isc::dhcp::Subnet4Ptr> kea_onelease4_subnets;
 
 // Returns an address and a length from subnet prefix
 std::pair<isc::asiolink::IOAddress, uint8_t>

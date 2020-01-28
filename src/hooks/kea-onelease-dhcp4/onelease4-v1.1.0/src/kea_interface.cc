@@ -19,6 +19,8 @@
 #include <util/strutil.h>
 #include <dhcpsrv/subnet.h>
 
+#include "h/functions.h"
+
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::data;
@@ -31,8 +33,8 @@ int KEA_FAILURE = 1;
 // Hook can be loaded but it may be disabled...
 bool kea_onelease4_enabled = true;
 
-// Optional subnet prefix
-std::string kea_onelease4_subnet = "";
+// Optional ONElease subnet list
+std::vector<isc::dhcp::Subnet4Ptr> kea_onelease4_subnets;
 
 // By default all prefixes are accepted or only specific first two bytes...
 std::vector<uint8_t> kea_onelease4_byte_prefix;
@@ -60,13 +62,14 @@ extern "C" {
         // "parameters": {
         //     "enabled": true,
         //     "byte-prefix": "",
+        //     "subnets": [],
         //     "logger-name": "kea-onelease-dhcp4",
         //     "debug": true,
         //     "debug-logfile": "/var/log/kea-onelease-dhcp4-debug.log"
         // }
         ConstElementPtr param_enabled = handle.getParameter("enabled");
         ConstElementPtr param_byte_prefix = handle.getParameter("byte-prefix");
-        ConstElementPtr param_subnet = handle.getParameter("subnet");
+        ConstElementPtr param_subnets = handle.getParameter("subnets");
         ConstElementPtr param_logger_name = handle.getParameter("logger-name");
         ConstElementPtr param_debug = handle.getParameter("debug");
         ConstElementPtr param_debug_logfile = handle.getParameter("debug-logfile");
@@ -82,7 +85,7 @@ extern "C" {
         {
             if (param_enabled->getType() != Element::boolean) {
                 isc_throw(isc::BadValue,
-                          "Parameter 'enabled' must be boolean!");
+                          "Parameter 'enabled' must be a boolean!");
             }
             kea_onelease4_enabled = param_enabled->boolValue();
         }
@@ -91,7 +94,7 @@ extern "C" {
         {
             if (param_byte_prefix->getType() != Element::string) {
                 isc_throw(isc::BadValue,
-                          "Parameter 'byte-prefix' must be string!");
+                          "Parameter 'byte-prefix' must be a string!");
             }
             isc::util::str::decodeFormattedHexString(
                     param_byte_prefix->stringValue(),
@@ -106,21 +109,30 @@ extern "C" {
             }
         }
 
-        if (param_subnet)
+        if (param_subnets)
         {
-            if (param_subnet->getType() != Element::string) {
+            if (param_subnets->getType() != Element::list) {
                 isc_throw(isc::BadValue,
-                          "Parameter 'subnet' must be string!");
+                          "Parameter 'subnets' must be a list!");
             }
-            kea_onelease4_subnet = param_subnet->stringValue();
 
             // validate subnet prefix
-            std::pair<isc::asiolink::IOAddress, uint8_t> parsed =
-                parse_subnet_prefix(kea_onelease4_subnet);
-            if (!parsed.first.isV4() || parsed.first.isV4Zero() ||
-                (parsed.second > 32) || (parsed.second == 0)) {
-                isc_throw(isc::BadValue,
-                        "unable to parse invalid IPv4 prefix " << kea_onelease4_subnet);
+            for (size_t i = 0; i < param_subnets->size(); i++) {
+                std::string subnet_str = param_subnets->get(i)->stringValue();
+
+                std::pair<isc::asiolink::IOAddress, uint8_t> parsed =
+                    parse_subnet_prefix(subnet_str);
+                if (!parsed.first.isV4() || parsed.first.isV4Zero() ||
+                    (parsed.second > 32) || (parsed.second == 0)) {
+                    isc_throw(isc::BadValue,
+                            "unable to parse invalid IPv4 prefix "
+                            << subnet_str);
+                } else {
+                    // append a new subnet structure to the global onelease
+                    // subnet list
+                    kea_onelease4_subnets.push_back(
+                            create_subnet4(subnet_str));
+                }
             }
         }
 
@@ -128,7 +140,7 @@ extern "C" {
         {
             if (param_debug->getType() != Element::boolean) {
                 isc_throw(isc::BadValue,
-                          "Parameter 'debug' must be boolean!");
+                          "Parameter 'debug' must be a boolean!");
             }
             debug = param_debug->boolValue();
         }
@@ -137,7 +149,7 @@ extern "C" {
         {
             if (param_debug_logfile->getType() != Element::string) {
                 isc_throw(isc::BadValue,
-                          "Parameter 'debug-logfile' must be string!");
+                          "Parameter 'debug-logfile' must be a string!");
             }
             debug_filename = param_debug_logfile->stringValue();
         }
@@ -146,7 +158,7 @@ extern "C" {
         {
             if (param_logger_name->getType() != Element::string) {
                 isc_throw(isc::BadValue,
-                          "Parameter 'logger-name' must be string!");
+                          "Parameter 'logger-name' must be a string!");
             }
             logger_name = param_logger_name->stringValue();
         }

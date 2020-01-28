@@ -23,6 +23,7 @@
 #include <string>
 
 #include "h/kea_interface.h"
+#include "h/functions.h"
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -189,7 +190,7 @@ int kea_onelease4(CalloutHandle& handle,
             oneaddr = isc::asiolink::IOAddress(oneaddr_str);
 
         // Do not apply hook if ONE subnet restriction is invalid
-        if (!is_onelease4_in_range(oneaddr, kea_onelease4_subnet))
+        if (!is_onelease4_in_range(oneaddr, kea_onelease4_subnets))
             throw NonMatchingSubnet();
 
         // The inRange() test is actually redundant because it is also done
@@ -239,9 +240,7 @@ int kea_onelease4(CalloutHandle& handle,
                 // to guard against a crash, we'll flush the output stream
                 flush(debug_logfile);
             }
-        }
-        else
-        {
+        } else {
             // We reject this packet because the ONE address cannot fit the
             // range or any of the pools...
             handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
@@ -285,7 +284,8 @@ int kea_onelease4(CalloutHandle& handle,
                 << " ONE address is not in the hook's subnet range:" \
                 << " HW address: '" << hwaddr_str << "'" \
                 << ", ONE HW/IP: '" << oneaddr_str << "'" \
-                << ", ONE subnet: '" << kea_onelease4_subnet << "'" \
+                << ", ONE subnets: '" << \
+                print_onelease4_subnets(kea_onelease4_subnets) << "'" \
                 << "\n";
 
             // to guard against a crash, we'll flush the output stream
@@ -314,28 +314,33 @@ bool match_byte_prefix(const std::vector<uint8_t> &byte_prefix,
 }
 
 bool is_onelease4_in_range(const isc::asiolink::IOAddress &ip_addr,
-                           const std::string subnet_str)
+                           const std::vector<isc::dhcp::Subnet4Ptr> &subnets)
 {
-    // is subnet parameter used?
-    if (subnet_str.empty())
+    // is onelease subnet list parameter used?
+    if (subnets.empty())
         return true;
 
-    // create subnet based on the parameter
-    Subnet4Ptr subnet4_ptr = create_subnet4(subnet_str);
+    // compare the address with every subnet in the list...
+    for (size_t i = 0; i < subnets.size(); i++)
+        if (subnets[i]->inRange(ip_addr))
+            return true;
 
-    if (!(subnet4_ptr->inRange(ip_addr)))
-            return false;
-
-    return true;
+    return false;
 }
 
-isc::dhcp::Subnet4Ptr create_subnet4(const std::string subnet_str)
+std::string print_onelease4_subnets(
+        const std::vector<isc::dhcp::Subnet4Ptr> &subnets)
 {
-    size_t pos = subnet_str.find("/");
-    isc::asiolink::IOAddress addr(subnet_str.substr(0, pos));
-    size_t len = boost::lexical_cast<unsigned int>(subnet_str.substr(pos + 1));
+    // are there any subnets?
+    if (subnets.empty())
+        return "";
 
-    return (isc::dhcp::Subnet4Ptr(new isc::dhcp::Subnet4(addr, len, 1000, 2000, 3000, 1)));
+    // concatenate all subnets
+    std::string subnets_str = "";
+    for (size_t i = 0; i < subnets.size(); i++, subnets_str += ", ")
+        subnets_str += subnets[i]->toText();
+
+    return subnets_str;
 }
 
 

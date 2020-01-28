@@ -50,10 +50,11 @@ bool match_byte_prefix(const std::vector<uint8_t> &byte_prefix,
 // Check if our ONE lease address is within the ONE subnet
 // (if ONE subnet is not used then it always returns true)
 bool is_onelease4_in_range(const isc::asiolink::IOAddress &ip_addr,
-                           const std::string subnet_str);
+                           const std::vector<isc::dhcp::Subnet4Ptr> &subnets);
 
-// Returns Kea structure representing the subnet (smartpointer)
-isc::dhcp::Subnet4Ptr create_subnet4(const std::string subnet_str);
+// Print out the ONE lease subnets as a one string
+std::string print_onelease4_subnets(
+        const std::vector<isc::dhcp::Subnet4Ptr> &subnets);
 
 
 // do not put any code AFTER this line
