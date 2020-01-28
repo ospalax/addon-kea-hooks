@@ -17,7 +17,7 @@ For ISC Kea builds this project follows the upstream ISC Kea versioning (e.g.: `
     - `1.6.0`
     - `1.6.1`
 
-- Supported Alpine Linux versions: `v3.10+`
+- Supported Alpine Linux versions: `v3.11+`
 
 ## Hooks
 
