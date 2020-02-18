@@ -30,7 +30,7 @@ __all__ = [
 __title__ = "kea-config-generator"
 __summary__ = "ISC Kea configuration generator"
 __uri__ = "https://github.com/ospalax/ikea"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Petr Ospalý"
 __email__ = "pospaly@opennebula.systems"
 __license__ = "Apache License, Version 2.0"
@@ -208,8 +208,13 @@ def gen_subnets(params):
             # create list of all ips
             subnet_range = ipaddress.ip_network(new_subnet)
 
-            pool_start = subnet_range[2]    # exempt the lowest ip
-            pool_end = subnet_range[-2]     # no broadcast already
+            if subnet_range.num_addresses >= 4:
+                pool_start = subnet_range[2]    # skip 0 and first ip
+                pool_end = subnet_range[-2]     # exempt the broadcast ip
+            else:
+                msg('WARNING', "This subnet '%s' has no valid pool..."
+                    "SKIPPED" % new_subnet)
+                continue
 
             if pool_start <= pool_end:
                 pool = {"pool": str(pool_start) + '-' + str(pool_end)}
@@ -222,7 +227,10 @@ def gen_subnets(params):
             # add the interface to be on the safe side - this is undocumented
             # and I have found only one reference in official documentation:
             # https://kea.readthedocs.io/en/v1_6_0/arm/dhcp4-srv.html#host-reservation-in-dhcpv4
-            subnet["interface"] = netinf["iface"]
+            #
+            # this has a dubious usage when more than one interface share the
+            # same network...
+            # subnet["interface"] = netinf["iface"]
 
             # everything should be ok
             subnet_list.append(new_subnet)
@@ -345,7 +353,7 @@ def return_subnets(params):
 
         return sorted_subnets
 
-    def get_reservation_map(netinfs):
+    def get_reservation_map(netinfs, vips):
         """ Returns a map of reservations. """
 
         reservations_map = {}
@@ -360,17 +368,26 @@ def return_subnets(params):
                 else:
                     reservations_map[new_subnet] = [addr["addr"]]
 
+        for vip in vips:
+            vip_object = ipaddress.IPv4Address(vip)
+            for subnet in reservations_map:
+                subnet_object = ipaddress.ip_network(subnet)
+                if vip_object in subnet_object:
+                    if vip not in reservations_map[subnet]:
+                        reservations_map[subnet].append(vip)
+
         return reservations_map
 
-    def fix_reservations(subnets, netinfs):
+    def fix_reservations(subnets, netinfs, vips):
         """ Returns subnets with added reservations. """
 
         # we gather all addresses and map them to subnets
-        reservations_map = get_reservation_map(netinfs)
+        reservations_map = get_reservation_map(netinfs, vips)
 
         # and we add flex-id reservations
         for subnet in subnets:
             addrs = reservations_map.get(subnet["subnet"], [])
+            addrs.sort()
             reservations = subnet.get("reservations", [])
             for addr in addrs:
                 reservation = {
@@ -393,7 +410,8 @@ def return_subnets(params):
     subnets = fix_subnets(subnets, params.get("subnet-id"))
 
     # Here follows a hack to forbid Kea to lease its own addresses...
-    subnets = fix_reservations(subnets, params.get("my-network", []))
+    subnets = fix_reservations(subnets, params.get("my-network", []),
+                               params.get("vips", []))
 
     return subnets
 
@@ -430,6 +448,25 @@ def return_interfaces(params):
     interfaces = []
     for netinf in params["my-network"]:
         interfaces.append(netinf["iface"] + "/" + netinf["addrs"][0]["addr"])
+
+    # extend the interface list with VIPs
+    for vip in params.get("vips", []):
+        vip_object = ipaddress.IPv4Address(vip)
+        found = False
+        for netinf in params.get("my-network", []):
+            for addr in netinf["addrs"]:
+                subnet = addr["network"] + '/' + str(addr["prefix"])
+                subnet_object = ipaddress.ip_network(subnet)
+                if vip_object in subnet_object:
+                    new_iface = netinf["iface"] + "/" + vip
+                    if new_iface not in interfaces:
+                        interfaces.append(new_iface)
+                        found = True
+                        break
+            if found:
+                break
+
+    interfaces.sort()
 
     return interfaces
 
@@ -492,10 +529,6 @@ def return_dhcp4(params):
         "option-data": return_globaloptions(params),
         "subnet4": return_subnets(params),
         "lease-database": return_database(params),
-        "control-socket": {
-            "socket-type": "unix",
-            "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
-        },
         "sanity-checks": {
             "lease-checks": "fix-del"
         },
@@ -504,6 +537,12 @@ def return_dhcp4(params):
         "loggers": return_loggers(params),
         "hooks-libraries": return_hooks(params)
     }
+
+    if params.get("unix-socket"):
+        dhcp4["control-socket"] = {
+            "socket-type": "unix",
+            "socket-name": params["unix-socket"]
+        }
 
     return dhcp4
 
@@ -809,6 +848,19 @@ def get_params():
                         " and start from one again)."
                         " (Default: None/Auto, Min-Max: 1-%d)"
                         % SUBNET_ID_MAX)
+    parser.add_argument("-F", "--floating-ip",
+                        dest="vips",
+                        required=False,
+                        metavar="<virtual-ipv4>",
+                        action='append',
+                        type=validate_ipv4,
+                        help="Virtual floating IPv4 address (Default: None)."
+                        " This argument can be used multiple of times.")
+    parser.add_argument("-u", "--unix-socket",
+                        required=False,
+                        metavar="<socket>",
+                        help="Filename for the unix control socket"
+                        " (Default: None)")
 
     # validate arguments and feed them to the params object
     args = parser.parse_args()

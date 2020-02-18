@@ -2,7 +2,7 @@
 
 ## kea-config-generator
 
-### Version: `1.0.0`
+### Version: `1.1.0`
 
 This script helps to generate Kea's config file (e.g.: `kea-dhcp4.conf`) from scratch. It either create configuration based on arguments or completely auto-generates one based on the machine's network interfaces and addresses.
 
@@ -14,12 +14,13 @@ This script helps to generate Kea's config file (e.g.: `kea-dhcp4.conf`) from sc
 
 
 ```
-usage: kea-config-generator [-h] [-t <lease-time-seconds>] [-a]
+usage: kea-config-generator [-h] [-v] [-t <lease-time-seconds>] [-a]
                             [-l <logfile-name>] [-d <lease-database-json>]
                             [-i <iface[/<ipv4>]>] [-n <nameserver-ipv4>]
                             [-r <router-ipv4>] [-o <option-data-json>]
                             [-s <subnet4-json>] [-x <hook-json>]
                             [-L <logger-json>] [-I <id-number>]
+                            [-F <virtual-ipv4>] [-u <socket>]
 
 ISC Kea dhcp4 config generator - it generates dhcp4 config file and its
 content can be modified by varies options. The result is then simply printed
@@ -75,4 +76,10 @@ optional arguments:
                         highest id is reached then it will reset and start
                         from one again). (Default: None/Auto, Min-Max:
                         1-4294967294)
+  -F <virtual-ipv4>, --floating-ip <virtual-ipv4>
+                        Virtual floating IPv4 address (Default: None). This
+                        argument can be used multiple of times.
+  -u <socket>, --unix-socket <socket>
+                        Filename for the unix control socket (Default: None)
+
 ```
