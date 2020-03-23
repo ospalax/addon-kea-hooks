@@ -394,7 +394,6 @@ def return_subnets(params):
                     ip_addr = ipaddress.ip_address(addr)
                     if ip_addr in subnet_range and addr not in addrs:
                         addrs.append(addr)
-                        break
 
             addrs.sort()
             reservations = subnet.get("reservations", [])
