@@ -30,7 +30,7 @@ __all__ = [
 __title__ = "kea-config-generator"
 __summary__ = "ISC Kea configuration generator"
 __uri__ = "https://github.com/ospalax/ikea"
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __author__ = "Petr Ospalý"
 __email__ = "pospaly@opennebula.systems"
 __license__ = "Apache License, Version 2.0"
@@ -171,7 +171,8 @@ def gen_subnets(params):
                 continue
 
             iface = iface.split("/")
-            interface_map[iface[0]] = []
+            if not interface_map.get(iface[0], []):
+                interface_map[iface[0]] = []
             if len(iface) > 1:
                 interface_map[iface[0]].append(iface[1])
 
@@ -190,14 +191,14 @@ def gen_subnets(params):
             # if no explicit interfaces then skip loopback at least
             continue
 
-        subnet = {}
-        pools = []
-
         for addr in netinf["addrs"]:
             # if explicit interfaces used then verify used address...
             if interfaces_map and interfaces_map[netinf["iface"]]:
                 if addr["addr"] not in interfaces_map[netinf["iface"]]:
                     continue
+
+            subnet = {}
+            pools = []
 
             new_subnet = addr["network"] + '/' + str(addr["prefix"])
 
@@ -387,6 +388,14 @@ def return_subnets(params):
         # and we add flex-id reservations
         for subnet in subnets:
             addrs = reservations_map.get(subnet["subnet"], [])
+            for found_subnet in reservations_map:
+                subnet_range = ipaddress.ip_network(subnet["subnet"])
+                for addr in reservations_map.get(found_subnet, []):
+                    ip_addr = ipaddress.ip_address(addr)
+                    if ip_addr in subnet_range and addr not in addrs:
+                        addrs.append(addr)
+                        break
+
             addrs.sort()
             reservations = subnet.get("reservations", [])
             for addr in addrs:
