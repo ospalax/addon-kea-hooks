@@ -2,6 +2,10 @@
 
 Testbed for building **[ISC Kea](https://www.isc.org/kea/)** software on **Alpine Linux** for **OpenNebula's VNF appliance**.
 
+**NOTE**: Custom **ONELease** Hook for ISC Kea is under ``src/hooks``.
+
+**IMPORTANT**: I am archiving this repo and future updates will be in the official OpenNebula fork: https://github.com/OpenNebula/addon-kea-hooks
+
 ## OpenNebula VNF
 
 One of the VNFs for OpenNebula's VNF appliance is a dhcp and Kea with its custom hooks was the best solution for our requirement (matching HW address with the IP lease) - `dnsmasq` has some hook system too, but they are triggered too late (after the lease is actually done). Kea's hooks are more granular and hooked onto more places during the process, which scratches our itch.
